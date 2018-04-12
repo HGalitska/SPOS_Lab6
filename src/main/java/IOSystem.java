@@ -34,7 +34,7 @@ public class IOSystem {
         System.out.println("numOfBlocksInOneCylinder = " + numOfBlocksInOneCylinder + "\nnumOfBlocksInOneTrack = " + numOfBlocksInOneTrack + "\nnumOfBlocksInOneSector = " + numOfBlocksInOneSector);
     }
 
-    public int getBlockLengthInBytes() {
+    public static int getBlockLengthInBytes() {
         return blockLengthInBytes;
     }
 
@@ -81,13 +81,23 @@ public class IOSystem {
 
         if (sectorNumber < 0) throw new Exception("cannot define sector number for block #" + i);
 
-        int[] result = new int[3];
 
-        System.out.println("\ntry to get block #" + i + "\ncylinder number = " + cylinderNumber + "\ntrackNumber = " + trackNumber + "\nsector number = " + sectorNumber);
+        int blockBeginningInSector;
+        if (i % 2 == 0) {
+            blockBeginningInSector = 0;
+        } else {
+            blockBeginningInSector = 64;
+        }
+
+
+        int[] result = new int[4];
+
+        System.out.println("\ntry to get block #" + i + "\ncylinder number = " + cylinderNumber + "\ntrackNumber = " + trackNumber + "\nsector number = " + sectorNumber + "\nblock starts from byte #" + blockBeginningInSector);
 
         result[0] = cylinderNumber;
         result[1] = trackNumber;
         result[2] = sectorNumber;
+        result[3] = blockBeginningInSector;
 
         return result;
     }
@@ -97,21 +107,29 @@ public class IOSystem {
      * specified by the pointer p. The number of characters copied corresponds to the
      * block length, B (blockLengthInBytes).
      *
-     * @param i the number of the logical block that should be read
-     * @param p the pointer that specified the destination location in main memory for storage the block's copy
+     * @param i      the number of the logical block that should be read
+     * @param buffer the pointer that specified the destination location in main memory for storage the block's copy
+     * @throws IllegalArgumentException
      * @throws Exception
      */
-    public int[] read_block(int i, Byte[] p) throws Exception {
+    public int[] read_block(int i, Block buffer) throws IllegalArgumentException, Exception {
         if (0 > i || i >= numberOfBlocks)
             throw new IllegalArgumentException("(i) should be: (0 <= i || i < numberOfBlocks); i = " + i + "; numberOfBlocks = " + numberOfBlocks);
-        if (p.length != blockLengthInBytes) throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes");
+        if (buffer.bytes.length != blockLengthInBytes)
+            throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes");
 
         System.out.println("\nread block(i)\ni = " + i);
 
         int[] blockLocation = getBlockLocationOnDisk(i);
 
+        System.out.println("block location: " + Arrays.toString(blockLocation));
 
-        System.out.println(Arrays.toString(blockLocation));
+
+        int shiftBytes = blockLocation[3];
+        for (int k = 0; k < blockLengthInBytes; k++) {
+            buffer.bytes[k] = ldisk.cylinders[blockLocation[0]].tracks[blockLocation[1]].sectors[blockLocation[2]].bytes[k + shiftBytes];
+        }
+
         return blockLocation;
     }
 
@@ -120,12 +138,25 @@ public class IOSystem {
      * main memory starting at the location specified by the pointer p, into the logical
      * block ldisk[i].
      *
-     * @param i the number of the destination logical block to which the block should be written
-     * @param p the pointer that specified the source location in main memory from which block will be copied
+     * @param i      the number of the destination logical block to which the block should be written
+     * @param buffer the pointer that specified the source location in main memory from which block will be copied
+     * @throws IllegalArgumentException
+     * @throws Exception
      */
-    public void write_block(int i, Byte[] p) throws IllegalArgumentException {
+    public void write_block(int i, byte[] buffer) throws IllegalArgumentException, Exception {
         if (0 > i || i >= numberOfBlocks)
             throw new IllegalArgumentException("(i) should be: (0 <= i || i < numberOfBlocks); i = " + i + "; numberOfBlocks = " + numberOfBlocks);
+        if (buffer.length != blockLengthInBytes)
+            throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes");
 
+        System.out.println("\nwrite block(i)\ni = " + i);
+
+        int[] blockLocation = getBlockLocationOnDisk(i);
+        System.out.println("block location: " + Arrays.toString(blockLocation));
+
+        int shiftBytes = blockLocation[3];
+        for (int k = 0; k < blockLengthInBytes; k++) {
+            ldisk.cylinders[blockLocation[0]].tracks[blockLocation[1]].sectors[blockLocation[2]].bytes[k + shiftBytes] = buffer[k];
+        }
     }
 }
