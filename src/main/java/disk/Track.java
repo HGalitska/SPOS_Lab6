@@ -2,7 +2,7 @@ package disk;
 
 public class Track {
     public Sector[] sectors;
-    public static final int numOfSectors = 4;
+    public static final int numOfSectors = 8;
     public static final int numOfBytes = numOfSectors * Sector.numOfBytes;
 
     public Track() {

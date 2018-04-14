@@ -2,6 +2,8 @@ import disk.LDisk;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.BitSet;
+
 public class IOSystemTest {
 
     @Test
@@ -11,12 +13,12 @@ public class IOSystemTest {
 
         Block block = new Block();
 
-        int i = 0;
-        int[] expectedResult = {0, 0, 0, 0};
+        int blockNumber = 0;
+        int[] expectedResult = {0, 0, 0};
         int[] actualResult = null;
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -24,11 +26,11 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 3;
-        expectedResult = new int[]{0, 0, 1, 64};
+        blockNumber = 3;
+        expectedResult = new int[]{0, 0, 3};
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -36,11 +38,11 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 7;
-        expectedResult = new int[]{0, 0, 3, 64};
+        blockNumber = 7;
+        expectedResult = new int[]{0, 0, 7};
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -48,11 +50,11 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 8;
-        expectedResult = new int[]{0, 1, 0, 0};
+        blockNumber = 8;
+        expectedResult = new int[]{0, 1, 0};
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -60,11 +62,11 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 23;
-        expectedResult = new int[]{0, 2, 3, 64};
+        blockNumber = 23;
+        expectedResult = new int[]{1, 0, 7};
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -72,11 +74,11 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 31;
-        expectedResult = new int[]{0, 3, 3, 64};
+        blockNumber = 31;
+        expectedResult = new int[]{1, 1, 7};
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,11 +86,11 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 32;
-        expectedResult = new int[]{1, 0, 0, 0};
+        blockNumber = 32;
+        expectedResult = new int[]{2, 0, 0};
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -96,11 +98,11 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 39;
-        expectedResult = new int[]{1, 0, 3, 64};
+        blockNumber = 39;
+        expectedResult = new int[]{2, 0, 7};
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -108,11 +110,11 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 56;
-        expectedResult = new int[]{1, 3, 0, 0};
+        blockNumber = 56;
+        expectedResult = new int[]{3, 1, 0};
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -120,12 +122,12 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 63;
-        expectedResult = new int[]{1, 3, 3, 64};
+        blockNumber = 63;
+        expectedResult = new int[]{3, 1, 7};
         actualResult = null;
 
         try {
-            actualResult = IO_System.read_block(i, block);
+            actualResult = IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -133,10 +135,10 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = 64;
+        blockNumber = 64;
         Exception exception = null;
         try {
-            IO_System.read_block(i, block);
+            IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             exception = e;
         }
@@ -145,10 +147,10 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = -1;
+        blockNumber = 67;
         exception = null;
         try {
-            IO_System.read_block(i, block);
+            IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             exception = e;
         }
@@ -157,10 +159,22 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        i = -1;
+        blockNumber = -1;
         exception = null;
         try {
-            IO_System.read_block(i, block);
+            IO_System.read_block(blockNumber, block);
+        } catch (Exception e) {
+            exception = e;
+        }
+
+        Assert.assertNotNull(exception);
+
+        /************************************************************************/
+
+        blockNumber = -4;
+        exception = null;
+        try {
+            IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             exception = e;
         }
@@ -170,16 +184,16 @@ public class IOSystemTest {
         /************************************************************************/
 
 
-        i = 24;
+        blockNumber = 24;
         try {
-            IO_System.read_block(i, block);
+            IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         Assert.assertEquals(IOSystem.getBlockLengthInBytes(), block.bytes.length);
 
-        System.out.println("\nblock bytes:\n");
+        System.out.println("\nbytes from block #24 before writing to it:\n");
         for (Byte b : block.bytes) {
             System.out.print(b + " ");
             Assert.assertEquals(0, b.intValue());
@@ -188,26 +202,33 @@ public class IOSystemTest {
 
         /************************************************************************/
 
-        byte[] bytes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-                19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
-                38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56,
-                57, 58, 59, 60, 61, 62, 63};
+        byte[] bytes = new byte[64];
+
+        for (int k = 0; k < bytes.length; k++) {
+            bytes[k] = (byte) (k + 15);
+        }
+
+
         try {
-            IO_System.write_block(i, bytes);
+            IO_System.write_block(blockNumber, bytes);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
-            IO_System.read_block(i, block);
+            IO_System.read_block(blockNumber, block);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        System.out.println("\nblock bytes:\n");
+        System.out.println("\nbytes from block #24 after writing to it:\n");
         for (Byte b : block.bytes) {
             System.out.print(b + " ");
         }
         System.out.println();
+
+        for (int k = 0; k < block.bytes.length; k++) {
+            Assert.assertEquals(block.bytes[k], bytes[k]);
+        }
     }
 }
