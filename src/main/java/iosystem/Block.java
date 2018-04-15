@@ -1,7 +1,9 @@
+package iosystem;
+
 public class Block {
     public byte[] bytes;
 
-    Block() {
+    public Block() {
         bytes = new byte[IOSystem.getBlockLengthInBytes()];
     }
 }
