@@ -3,6 +3,8 @@ package filesystem;
 public class FileSystem {
 
     final static int NUMBER_OF_FILE_DESCRIPTORS = 16;
+    final static int STATUS_SUCCESS = 1;
+    final static int STATUS_ERROR = -3;
 
     OpenFileTable OFT;
     int[] bitmap;
@@ -24,22 +26,20 @@ public class FileSystem {
      * Creates a new file with the specified name.
      *
      * @param symbolicFileName name of the file to be created.
-     * @return boolean              status.
+     * @return int              status.
      */
-    boolean create(String symbolicFileName) {
-        boolean status = false;
-        return status;
+    int create(String symbolicFileName) {
+        return STATUS_SUCCESS;
     }
 
     /**
      * Destroys the named file.
      *
      * @param symbolicFileName name of the file to be destroyed.
-     * @return boolean              status.
+     * @return int              status.
      */
-    boolean destroy(String symbolicFileName) {
-        boolean status = false;
-        return status;
+    int destroy(String symbolicFileName) {
+        return STATUS_SUCCESS;
     }
 
     /**
@@ -57,8 +57,10 @@ public class FileSystem {
      * Closes the specified file.
      *
      * @param FDIndex index of file descriptor.
+     * @return int    status.
      */
-    void close(int FDIndex) {
+    int close(int FDIndex) {
+        return STATUS_SUCCESS;
     }
 
     /**
@@ -68,8 +70,10 @@ public class FileSystem {
      * @param FDIndex index of file descriptor.
      * @param memArea starting main memory address.
      * @param count   number of bytes to be read.
+     * @return int    status.
      */
-    void read(int FDIndex, int memArea, int count) {
+    int read(int FDIndex, int memArea, int count) {
+        return STATUS_SUCCESS;
     }
 
     /**
@@ -79,8 +83,10 @@ public class FileSystem {
      * @param FDIndex index of file descriptor.
      * @param memArea starting main memory address.
      * @param count   number of bytes to be written.
+     * @return int    status.
      */
-    void write(int FDIndex, int memArea, int count) {
+    int write(int FDIndex, int memArea, int count) {
+        return STATUS_SUCCESS;
     }
 
     /**
@@ -95,8 +101,10 @@ public class FileSystem {
      *
      * @param FDIndex index of file descriptor.
      * @param pos     new position, specifies the number of bytes from the beginning of the file
+     * @return int    status.
      */
-    void lseek(int FDIndex, int pos) {
+    int lseek(int FDIndex, int pos) {
+        return STATUS_SUCCESS;
     }
 
     /**
