@@ -4,8 +4,8 @@ import disk.Cylinder;
 import disk.LDisk;
 import disk.Track;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
-
 
 public class IOSystem {
 
@@ -25,14 +25,12 @@ public class IOSystem {
 
     public IOSystem(LDisk ldisk) {
         this.ldisk = ldisk;
-
         System.out.println("Total number of bytes = " + LDisk.numOfBytes);
         numberOfBlocks = LDisk.numOfBytes / blockLengthInBytes;
         System.out.println("Block length in bytes = " + blockLengthInBytes + "\nNumber of blocks = " + numberOfBlocks);
         numOfBlocksInOneCylinder = (Cylinder.numOfBytes / blockLengthInBytes);
         numOfBlocksInOneTrack = numOfBlocksInOneCylinder / Cylinder.numOfTracks;
         numOfBlocksInOneSector = numOfBlocksInOneTrack / Track.numOfSectors;
-
         System.out.println("numOfBlocksInOneCylinder = " + numOfBlocksInOneCylinder + "\nnumOfBlocksInOneTrack = " + numOfBlocksInOneTrack + "\nnumOfBlocksInOneSector = " + numOfBlocksInOneSector);
     }
 
@@ -58,7 +56,6 @@ public class IOSystem {
 
         int trackNumber = -1;
         int tempBlockNumber = blockNumber % numOfBlocksInOneCylinder;
-//        System.out.println("tempBlockNumber = " + tempBlockNumber);
 
         for (int k = 1; k <= Cylinder.numOfTracks; k++) {
             if (tempBlockNumber <= k * numOfBlocksInOneTrack - 1) {
@@ -71,7 +68,6 @@ public class IOSystem {
 
         int sectorNumber = -1;
         tempBlockNumber %= numOfBlocksInOneTrack;
-//        System.out.println("tempBlockNumber = " + tempBlockNumber);
 
         for (int k = 1; k <= Track.numOfSectors; k++) {
             if (tempBlockNumber <= k * numOfBlocksInOneSector - 1) {
@@ -103,10 +99,10 @@ public class IOSystem {
      * @throws IllegalArgumentException
      * @throws Exception
      */
-    public int[] read_block(int blockNumber, Block buffer) throws IllegalArgumentException, Exception {
+    public int[] read_block(int blockNumber, ByteBuffer buffer) throws IllegalArgumentException, Exception {
         if (0 > blockNumber || blockNumber >= numberOfBlocks)
             throw new IllegalArgumentException("(blockNumber) should be: (0 <= blockNumber || blockNumber < numberOfBlocks); blockNumber = " + blockNumber + "; numberOfBlocks = " + numberOfBlocks);
-        if (buffer.bytes.length != blockLengthInBytes)
+        if (buffer.array().length != blockLengthInBytes)
             throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes");
 
         System.out.println("\nread block(" + blockNumber + ")");
@@ -116,7 +112,7 @@ public class IOSystem {
         System.out.println("block location: " + Arrays.toString(blockLocation));
 
         for (int k = 0; k < blockLengthInBytes; k++) {
-            buffer.bytes[k] = ldisk.cylinders[blockLocation[0]].tracks[blockLocation[1]].sectors[blockLocation[2]].bytes[k];
+            buffer.put(k, ldisk.cylinders[blockLocation[0]].tracks[blockLocation[1]].sectors[blockLocation[2]].bytes[k]);
         }
 
         return blockLocation;

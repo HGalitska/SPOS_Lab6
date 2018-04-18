@@ -4,13 +4,13 @@ import iosystem.IOSystem;
 
 class OpenFileTable {
 
-    class OFTEntry {
-        Byte[] RWBuffer;
+    static class OFTEntry {
+        byte[] RWBuffer;
         int currentPosition;
         int FDIndex;
 
         OFTEntry() {
-            RWBuffer = new Byte[IOSystem.getBlockLengthInBytes()];
+            RWBuffer = new byte[IOSystem.getBlockLengthInBytes()];
             currentPosition = -1;
             FDIndex = -1;
         }
@@ -20,9 +20,5 @@ class OpenFileTable {
 
     OpenFileTable() {
         entries = new OFTEntry[4];
-
-        for (int i = 0; i < 4; i++) {
-            entries[i] = new OFTEntry();
-        }
     }
 }
