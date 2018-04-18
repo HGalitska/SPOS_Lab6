@@ -3,7 +3,6 @@ package filesystem;
 import iosystem.IOSystem;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
 
 public class FileSystem {
 
@@ -32,7 +31,10 @@ public class FileSystem {
     }
 
     private void initEmptyDisk() {
-        fileDescriptors[0] = new FileDescriptor(0, new int[]{16 * NUMBER_OF_FILE_DESCRIPTORS / IOSystem.getBlockLengthInBytes() + 1, 16 * NUMBER_OF_FILE_DESCRIPTORS / IOSystem.getBlockLengthInBytes() + 2, 16 * NUMBER_OF_FILE_DESCRIPTORS / IOSystem.getBlockLengthInBytes() + 3});
+        int fdsPerBlock = 16 * NUMBER_OF_FILE_DESCRIPTORS / IOSystem.getBlockLengthInBytes();
+
+        // init directory and add it to OFT
+        fileDescriptors[0] = new FileDescriptor(0, new int[]{fdsPerBlock + 1, fdsPerBlock + 2, fdsPerBlock + 3});
         OFT.entries[0] = new OpenFileTable.OFTEntry();
         OFT.entries[0].FDIndex = 0;
     }
@@ -41,16 +43,6 @@ public class FileSystem {
         // bitmap to disk
         // -1 for empty FD and so on..
         // Directory bytes - to disk blocks
-    }
-
-
-
-    /**
-     * @param FDIndex index of the file descriptor.
-     * @return FileDescriptor   that correspond to the block.
-     */
-    FileDescriptor getFD(int FDIndex) {
-        return null;
     }
 
     /**
@@ -67,18 +59,27 @@ public class FileSystem {
         }
         boolean doFileExist = false;
         for (Directory.DirEntry dirEntry : directory.entries) {
-            if (dirEntry.file_name == symbolicFileName) doFileExist = true;
+            if (dirEntry.file_name.equals(symbolicFileName)) doFileExist = true;
         }
         if (doFileExist) {
             System.out.println("\nFile already exists.\n");
             return STATUS_ERROR;
         }
         directory.addEntry(symbolicFileName, FDIndex);
+        // !!!!!!!! write new entries to directory blocks -- with write(0, dirEntryBytes) ?
         fileDescriptors[FDIndex] = new FileDescriptor();
 
         System.out.println("\nAfter creating new object:");
         directory.entries.forEach((o) -> System.out.println("FDIndex: " + o.FDIndex + "; File name: " + o.file_name));
 
+        /**
+         * if first block of directory is full -> write it to disc, allocate second block
+         */
+        if (directory.entries.size() == 8) {
+            ioSystem.write_block(fileDescriptors[0].blockNumbers[0], OFT.entries[0].RWBuffer);
+            System.out.println("Create: written first directory block to disc.");
+            //fileDescriptors[0].blockNumbers[1] = getEmptyBlock(); <-- implement getEmptyBlock()
+        }
         return STATUS_SUCCESS;
     }
 
@@ -95,8 +96,44 @@ public class FileSystem {
      * @param symbolicFileName name of the file to be destroyed.
      * @return int              status.
      */
-    int destroy(String symbolicFileName) {
+    int destroy(String symbolicFileName) throws Exception {
+        int FDIndex = getFDIndex(symbolicFileName);
+        if (FDIndex == -1) {
+            System.out.println("Destroy: file does NOT exist.");
+            return STATUS_ERROR;
+        }
+
+        /**
+         * Close file if it is open
+         */
+        int OFTEntryIndex = getOFTEntryIndex(FDIndex);
+        if (OFTEntryIndex != -1) {
+            close(OFTEntryIndex);
+        }
+
+        // clear file blocks on disk
+        int[] fileBlocks = fileDescriptors[FDIndex].blockNumbers;
+        for (int block : fileBlocks) {
+            if (block != -1)
+                ioSystem.write_block(block, new byte[64]);
+        }
+
+        // remove file from directory
+        int dirEntryIndex = getDirectoryEntryIndex(FDIndex);
+        directory.entries.remove(directory.entries.get(dirEntryIndex));
+
+        // clear file descriptor
+        fileDescriptors[FDIndex] = null;
+
+        System.out.println("Destroy: file " + symbolicFileName + " is destroyed.");
         return STATUS_SUCCESS;
+    }
+
+    int getDirectoryEntryIndex(int FDIndex) {
+        for (int i = 0; i < NUMBER_OF_FILE_DESCRIPTORS; i++) {
+            if (directory.entries.get(i) != null && directory.entries.get(i).FDIndex == FDIndex) return i;
+        }
+        return -1;
     }
 
     /**
@@ -109,18 +146,18 @@ public class FileSystem {
 
         int FDIndex = getFDIndex(symbolicFileName);
         if (FDIndex == -1) {
-            System.out.println("File does NOT exist.");
+            System.out.println("Open: file does NOT exist.");
             return STATUS_ERROR;
         }
 
-        if (isFileAlreadyOpened(FDIndex)) {
-            System.out.println("File is already opened.");
-            return STATUS_ERROR;
+        if (getOFTEntryIndex(FDIndex) != -1) {
+            System.out.println("Open: file is already opened.");
+            return getOFTEntryIndex(FDIndex);
         }
 
         int OFTEntryIndex = findFreeOFTEntryIndex();
         if (OFTEntryIndex == -1) {
-            System.out.println("Number of open files has reached the limit");
+            System.out.println("Open: number of open files has reached the limit");
             return STATUS_ERROR;
         }
 
@@ -142,18 +179,10 @@ public class FileSystem {
     }
 
     int getFDIndex(String fileName) {
-        for (Directory.DirEntry dirEntry: directory.entries) {
-            if (dirEntry.file_name == fileName) return dirEntry.FDIndex;
+        for (Directory.DirEntry dirEntry : directory.entries) {
+            if (dirEntry.file_name.equals(fileName)) return dirEntry.FDIndex;
         }
         return -1;
-    }
-
-
-    private boolean isFileAlreadyOpened(int FDIndex) {
-        for (OpenFileTable.OFTEntry OFTEntry : OFT.entries) {
-            if (OFTEntry.FDIndex == FDIndex) return true;
-        }
-        return false;
     }
 
     int findFreeOFTEntryIndex() {
@@ -163,15 +192,35 @@ public class FileSystem {
         return -1;
     }
 
-
+    int getOFTEntryIndex(int FDIndex) {
+        for (int i = 1; i < OFT.entries.length; i++) {
+            if (OFT.entries[i] != null && OFT.entries[i].FDIndex == FDIndex) return i;
+        }
+        return -1;
+    }
 
     /**
      * Closes the specified file.
      *
-     * @param FDIndex index of file descriptor.
+     * @param OFTEntryIndex index of file in OFT.
      * @return int    status.
      */
-    int close(int FDIndex) {
+    int close(int OFTEntryIndex) throws Exception {
+
+        if (OFTEntryIndex >= OFT.entries.length || OFT.entries[OFTEntryIndex] == null) {
+            System.out.println("Close: file is not opened.");
+            return STATUS_ERROR;
+        }
+
+        // write buffer to disc
+        int currentFileBlock = OFT.entries[OFTEntryIndex].currentPosition / IOSystem.getBlockLengthInBytes() + 1;
+        int currentDiscBlock = fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex].blockNumbers[currentFileBlock];
+
+        if (currentDiscBlock != -1)
+            ioSystem.write_block(currentDiscBlock, OFT.entries[OFTEntryIndex].RWBuffer);
+
+        OFT.entries[OFTEntryIndex] = new OpenFileTable.OFTEntry();
+
         return STATUS_SUCCESS;
     }
 
@@ -179,12 +228,12 @@ public class FileSystem {
      * Sequentially reads a number of bytes from the specified file into main memory.
      * Reading begins with the current position in the file.
      *
-     * @param FDIndex index of file descriptor.
-     * @param memArea starting main memory address.
-     * @param count   number of bytes to be read.
+     * @param OFTEntryIndex index of file in OFT.
+     * @param memArea       starting main memory address.
+     * @param count         number of bytes to be read.
      * @return int    status.
      */
-    int read(int FDIndex, int memArea, int count) {
+    int read(int OFTEntryIndex, int memArea, int count) {
         return STATUS_SUCCESS;
     }
 
@@ -192,12 +241,12 @@ public class FileSystem {
      * Sequentially writes a number of bytes from main memory into the specified file.
      * Writing begins with the current position in the file.
      *
-     * @param FDIndex index of file descriptor.
-     * @param memArea starting main memory address.
-     * @param count   number of bytes to be written.
+     * @param OFTEntryIndex index of file in OFT.
+     * @param memArea       starting main memory address.
+     * @param count         number of bytes to be written.
      * @return int    status.
      */
-    int write(int FDIndex, int memArea, int count) {
+    int write(int OFTEntryIndex, int memArea, int count) {
         return STATUS_SUCCESS;
     }
 
@@ -211,11 +260,11 @@ public class FileSystem {
      * Seeking to position 0 implements a reset command, so that the
      * entire file can be reread or rewritten from the beginning.
      *
-     * @param FDIndex index of file descriptor.
-     * @param pos     new position, specifies the number of bytes from the beginning of the file
+     * @param OFTEntryIndex index of file in OFT.
+     * @param pos           new position, specifies the number of bytes from the beginning of the file
      * @return int    status.
      */
-    int lseek(int FDIndex, int pos) {
+    int lseek(int OFTEntryIndex, int pos) {
         return STATUS_SUCCESS;
     }
 
@@ -224,15 +273,6 @@ public class FileSystem {
      */
     void directory() {
     }
-
-
-
-
-
-
-
-
-
 
 
 //public void initDiskFromFile() {

@@ -79,4 +79,67 @@ public class FileSystemTest {
         }
         Assert.assertNotNull(exception);
     }
+
+    @Test
+    public void closeNotOpened() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            fileSystem.close(2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void closeDirectory() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            fileSystem.close(0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void closeNotCreated() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            fileSystem.create("fil1");
+            fileSystem.close(2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void destroyFile() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            fileSystem.create("fil1");
+            fileSystem.close(fileSystem.open("fil1"));
+            fileSystem.destroy("fil1");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
