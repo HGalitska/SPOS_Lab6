@@ -72,14 +72,14 @@ public class FileSystem {
         System.out.println("\nAfter creating new object:");
         directory.entries.forEach((o) -> System.out.println("FDIndex: " + o.FDIndex + "; File name: " + o.file_name));
 
-        /**
-         * if first block of directory is full -> write it to disc, allocate second block
-         */
-        if (directory.entries.size() == 8) {
-            ioSystem.write_block(fileDescriptors[0].blockNumbers[0], OFT.entries[0].RWBuffer);
-            System.out.println("Create: written first directory block to disc.");
-            //fileDescriptors[0].blockNumbers[1] = getEmptyBlock(); <-- implement getEmptyBlock()
-        }
+//        /**
+//         * if first block of directory is full -> write it to disk, allocate second block
+//         */
+//        if (directory.entries.size() == 8) {
+//            ioSystem.write_block(fileDescriptors[0].blockNumbers[0], OFT.entries[0].RWBuffer);
+//            System.out.println("Create: written first directory block to disc.");
+//            //fileDescriptors[0].blockNumbers[1] = getEmptyBlock(); <-- implement getEmptyBlock()
+//        }
         return STATUS_SUCCESS;
     }
 
@@ -120,7 +120,9 @@ public class FileSystem {
 
         // remove file from directory
         int dirEntryIndex = getDirectoryEntryIndex(FDIndex);
-        directory.entries.remove(directory.entries.get(dirEntryIndex));
+        directory.entries.remove(dirEntryIndex);
+
+        // !!!!!!!!! ----------------- clear bitmap
 
         // clear file descriptor
         fileDescriptors[FDIndex] = null;
@@ -130,7 +132,7 @@ public class FileSystem {
     }
 
     int getDirectoryEntryIndex(int FDIndex) {
-        for (int i = 0; i < NUMBER_OF_FILE_DESCRIPTORS; i++) {
+        for (int i = 0; i < NUMBER_OF_FILE_DESCRIPTORS - 1; i++) {
             if (directory.entries.get(i) != null && directory.entries.get(i).FDIndex == FDIndex) return i;
         }
         return -1;
@@ -207,20 +209,26 @@ public class FileSystem {
      */
     int close(int OFTEntryIndex) throws Exception {
 
+        if (OFTEntryIndex == 0) {
+            System.out.println("Close: directory can't be closed.");
+            return STATUS_ERROR;
+        }
+
         if (OFTEntryIndex >= OFT.entries.length || OFT.entries[OFTEntryIndex] == null) {
             System.out.println("Close: file is not opened.");
             return STATUS_ERROR;
         }
 
-        // write buffer to disc
-        int currentFileBlock = OFT.entries[OFTEntryIndex].currentPosition / IOSystem.getBlockLengthInBytes() + 1;
-        int currentDiscBlock = fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex].blockNumbers[currentFileBlock];
+        // write buffer to disk
+        int currentFileBlock = OFT.entries[OFTEntryIndex].currentPosition / IOSystem.getBlockLengthInBytes();
+        int currentDiskBlock = fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex].blockNumbers[currentFileBlock];
 
-        if (currentDiscBlock != -1)
-            ioSystem.write_block(currentDiscBlock, OFT.entries[OFTEntryIndex].RWBuffer);
+        if (currentDiskBlock != -1)
+            ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
 
-        OFT.entries[OFTEntryIndex] = new OpenFileTable.OFTEntry();
+        OFT.entries[OFTEntryIndex] = null;
 
+        System.out.println("Close: file is closed.");
         return STATUS_SUCCESS;
     }
 

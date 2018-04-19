@@ -135,7 +135,7 @@ public class FileSystemTest {
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
             fileSystem.create("fil1");
-            fileSystem.close(fileSystem.open("fil1"));
+            fileSystem.open("fil1");
             fileSystem.destroy("fil1");
 
         } catch (Exception e) {
