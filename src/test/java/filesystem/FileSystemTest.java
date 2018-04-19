@@ -15,22 +15,22 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("fil1");
-            fileSystem.create("fil2");
-            fileSystem.create("fil3");
-            fileSystem.create("fil4");
-            fileSystem.create("fil5");
-            fileSystem.create("fil6");
-            fileSystem.create("fil7");
-            fileSystem.create("fil8");
-            fileSystem.create("fil9");
-            fileSystem.create("fi10");
-            fileSystem.create("fi11");
-            fileSystem.create("fi12");
-            fileSystem.create("fi13");
-            fileSystem.create("fi14");
-            fileSystem.create("fi15");
-            fileSystem.create("fi16");
+            fileSystem.create("f1");
+            fileSystem.create("f2");
+            fileSystem.create("f3");
+            fileSystem.create("f4");
+            fileSystem.create("f5");
+            fileSystem.create("f6");
+            fileSystem.create("f7");
+            fileSystem.create("f8");
+            fileSystem.create("f9");
+            fileSystem.create("fa");
+            fileSystem.create("fb");
+            fileSystem.create("fc");
+            fileSystem.create("fd");
+            fileSystem.create("fe");
+            fileSystem.create("ff");
+            fileSystem.create("fg");
 
 
         } catch (Exception e) {
@@ -46,13 +46,13 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("fil1");
-            fileSystem.create("fil2");
-            fileSystem.create("fil3");
-            fileSystem.create("fil1");
-            fileSystem.create("fil4");
-            fileSystem.create("fil2");
-            fileSystem.create("fil3");
+            fileSystem.create("f1");
+            fileSystem.create("f2");
+            fileSystem.create("f3");
+            fileSystem.create("f1");
+            fileSystem.create("f4");
+            fileSystem.create("f2");
+            fileSystem.create("f3");
 
 
         } catch (Exception e) {
@@ -69,10 +69,10 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("fil1");
-            fileSystem.create("fil2");
+            fileSystem.create("f1");
+            fileSystem.create("f2");
             fileSystem.create("file4");
-            fileSystem.create("fil5");
+            fileSystem.create("f5");
 
         } catch (Exception e) {
             exception = e;
@@ -118,7 +118,7 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("fil1");
+            fileSystem.create("f1");
             fileSystem.close(2);
 
         } catch (Exception e) {
@@ -134,9 +134,9 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("fil1");
-            fileSystem.open("fil1");
-            fileSystem.destroy("fil1");
+            fileSystem.create("f1");
+            fileSystem.open("f1");
+            fileSystem.destroy("f1");
 
         } catch (Exception e) {
             e.printStackTrace();
