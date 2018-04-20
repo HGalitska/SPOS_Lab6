@@ -3,24 +3,28 @@ package filesystem;
 import iosystem.IOSystem;
 
 import java.nio.ByteBuffer;
+import java.util.BitSet;
 
 public class FileSystem {
 
     final static int NUMBER_OF_FILE_DESCRIPTORS = 16;
-    final static int STATUS_SUCCESS = 1;
-    final static int STATUS_ERROR = -3;
+    private final static int STATUS_SUCCESS = 1;
+    private final static int STATUS_ERROR = -3;
 
     private IOSystem ioSystem;
 
     private OpenFileTable OFT;
-    private int[] bitmap;
+    BitSet bitmap; // made package-public for testing purposes
     private Directory directory;
     private FileDescriptor[] fileDescriptors;
 
-    public FileSystem(IOSystem ioSystem, boolean isDiskEmpty) throws Exception {
+    FileSystem(IOSystem ioSystem, boolean isDiskEmpty) {
         if (ioSystem == null) throw new IllegalArgumentException("IOSystem should NOT be NULL");
         OFT = new OpenFileTable();
-        bitmap = new int[2];
+
+        bitmap = new BitSet(64);
+        bitmap.set(0, 5, true); // set 1 bit for bitmap + 4 for file descriptors
+
         this.ioSystem = ioSystem;
         fileDescriptors = new FileDescriptor[NUMBER_OF_FILE_DESCRIPTORS];
         directory = new Directory();
@@ -31,19 +35,16 @@ public class FileSystem {
     }
 
     private void initEmptyDisk() {
-        int fdsPerBlock = 16 * NUMBER_OF_FILE_DESCRIPTORS / IOSystem.getBlockLengthInBytes();
+        bitmap.set(5, 64, false); // all data blocks are empty
 
+        int fdsPerBlock = 16 * NUMBER_OF_FILE_DESCRIPTORS / IOSystem.getBlockLengthInBytes();
         // init directory and add it to OFT
         fileDescriptors[0] = new FileDescriptor(0, new int[]{fdsPerBlock + 1, fdsPerBlock + 2, fdsPerBlock + 3});
         OFT.entries[0] = new OpenFileTable.OFTEntry();
         OFT.entries[0].FDIndex = 0;
     }
 
-    private void writeDataToDisk() {
-        // bitmap to disk
-        // -1 for empty FD and so on..
-        // Directory bytes - to disk blocks
-    }
+    //*******************************************************************************************************/
 
     /**
      * Creates a new file with the specified name.
@@ -52,11 +53,12 @@ public class FileSystem {
      * @return int              status.
      */
     int create(final String symbolicFileName) throws Exception {
-        int FDIndex = findEmptyDescriptor();
+        int FDIndex = getFreeDescriptorIndex();
         if (FDIndex == -1) {
             System.out.println("\nNo more space for files.\n");
             return STATUS_ERROR;
         }
+
         boolean doFileExist = false;
         for (Directory.DirEntry dirEntry : directory.entries) {
             if (dirEntry.file_name.equals(symbolicFileName)) doFileExist = true;
@@ -65,29 +67,14 @@ public class FileSystem {
             System.out.println("\nFile already exists.\n");
             return STATUS_ERROR;
         }
+
         directory.addEntry(symbolicFileName, FDIndex);
-        // !!!!!!!! write new entries to directory blocks -- with write(0, dirEntryBytes) ?
         fileDescriptors[FDIndex] = new FileDescriptor();
 
         System.out.println("\nAfter creating new object:");
         directory.entries.forEach((o) -> System.out.println("FDIndex: " + o.FDIndex + "; File name: " + o.file_name));
 
-//        /**
-//         * if first block of directory is full -> write it to disk, allocate second block
-//         */
-//        if (directory.entries.size() == 8) {
-//            ioSystem.write_block(fileDescriptors[0].blockNumbers[0], OFT.entries[0].RWBuffer);
-//            System.out.println("Create: written first directory block to disc.");
-//            //fileDescriptors[0].blockNumbers[1] = getEmptyBlock(); <-- implement getEmptyBlock()
-//        }
         return STATUS_SUCCESS;
-    }
-
-    private int findEmptyDescriptor() {
-        for (int i = 0; i < NUMBER_OF_FILE_DESCRIPTORS; i++) {
-            if (fileDescriptors[i] == null) return i;
-        }
-        return -1;
     }
 
     /**
@@ -97,15 +84,13 @@ public class FileSystem {
      * @return int              status.
      */
     int destroy(String symbolicFileName) throws Exception {
-        int FDIndex = getFDIndex(symbolicFileName);
+        int FDIndex = getFileDescriptorIndex(symbolicFileName);
         if (FDIndex == -1) {
             System.out.println("Destroy: file does NOT exist.");
             return STATUS_ERROR;
         }
 
-        /**
-         * Close file if it is open
-         */
+        // close file if it is open
         int OFTEntryIndex = getOFTEntryIndex(FDIndex);
         if (OFTEntryIndex != -1) {
             close(OFTEntryIndex);
@@ -114,28 +99,21 @@ public class FileSystem {
         // clear file blocks on disk
         int[] fileBlocks = fileDescriptors[FDIndex].blockNumbers;
         for (int block : fileBlocks) {
-            if (block != -1)
+            if (block != -1) {
                 ioSystem.write_block(block, new byte[64]);
+                bitmap.set(block, false); // clear bits for now empty blocks
+            }
         }
 
         // remove file from directory
         int dirEntryIndex = getDirectoryEntryIndex(FDIndex);
         directory.entries.remove(dirEntryIndex);
 
-        // !!!!!!!!! ----------------- clear bitmap
-
         // clear file descriptor
         fileDescriptors[FDIndex] = null;
 
         System.out.println("Destroy: file " + symbolicFileName + " is destroyed.");
         return STATUS_SUCCESS;
-    }
-
-    int getDirectoryEntryIndex(int FDIndex) {
-        for (int i = 0; i < NUMBER_OF_FILE_DESCRIPTORS - 1; i++) {
-            if (directory.entries.get(i) != null && directory.entries.get(i).FDIndex == FDIndex) return i;
-        }
-        return -1;
     }
 
     /**
@@ -146,7 +124,7 @@ public class FileSystem {
      */
     int open(String symbolicFileName) throws Exception {
 
-        int FDIndex = getFDIndex(symbolicFileName);
+        int FDIndex = getFileDescriptorIndex(symbolicFileName);
         if (FDIndex == -1) {
             System.out.println("Open: file does NOT exist.");
             return STATUS_ERROR;
@@ -157,7 +135,7 @@ public class FileSystem {
             return getOFTEntryIndex(FDIndex);
         }
 
-        int OFTEntryIndex = findFreeOFTEntryIndex();
+        int OFTEntryIndex = getFreeOFTEntryIndex();
         if (OFTEntryIndex == -1) {
             System.out.println("Open: number of open files has reached the limit");
             return STATUS_ERROR;
@@ -180,27 +158,6 @@ public class FileSystem {
         return OFTEntryIndex;
     }
 
-    int getFDIndex(String fileName) {
-        for (Directory.DirEntry dirEntry : directory.entries) {
-            if (dirEntry.file_name.equals(fileName)) return dirEntry.FDIndex;
-        }
-        return -1;
-    }
-
-    int findFreeOFTEntryIndex() {
-        for (int i = 1; i < 4; i++) {
-            if (OFT.entries[i] == null) return i;
-        }
-        return -1;
-    }
-
-    int getOFTEntryIndex(int FDIndex) {
-        for (int i = 1; i < OFT.entries.length; i++) {
-            if (OFT.entries[i] != null && OFT.entries[i].FDIndex == FDIndex) return i;
-        }
-        return -1;
-    }
-
     /**
      * Closes the specified file.
      *
@@ -220,8 +177,10 @@ public class FileSystem {
         }
 
         // write buffer to disk
-        int currentFileBlock = OFT.entries[OFTEntryIndex].currentPosition / IOSystem.getBlockLengthInBytes();
-        int currentDiskBlock = fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex].blockNumbers[currentFileBlock];
+        OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
+        FileDescriptor fileDescriptor = fileDescriptors[OFTEntry.FDIndex];
+        int currentFileBlock = OFTEntry.currentPosition / IOSystem.getBlockLengthInBytes();
+        int currentDiskBlock = fileDescriptor.blockNumbers[currentFileBlock];
 
         if (currentDiskBlock != -1)
             ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
@@ -272,7 +231,42 @@ public class FileSystem {
      * @param pos           new position, specifies the number of bytes from the beginning of the file
      * @return int    status.
      */
-    int lseek(int OFTEntryIndex, int pos) {
+    int lseek(int OFTEntryIndex, int pos) throws Exception {
+        if (OFTEntryIndex >= OFT.entries.length || OFT.entries[OFTEntryIndex] == null) {
+            System.out.println("Lseek: file is not opened.");
+            return STATUS_ERROR;
+        }
+
+        FileDescriptor fileDescriptor = fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex];
+
+        if (pos > fileDescriptor.fileLengthInBytes || pos < 0) {
+            System.out.println("LSeek: New position is out of file.");
+            return STATUS_ERROR;
+        }
+
+        OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
+        int newFileBlock = pos / IOSystem.getBlockLengthInBytes();
+
+        int currentFileBlock = OFTEntry.currentPosition / IOSystem.getBlockLengthInBytes();
+        int currentDiskBlock = fileDescriptor.blockNumbers[currentFileBlock];
+
+        if (newFileBlock != currentFileBlock) {
+            // write current block to buffer
+            ioSystem.write_block(currentDiskBlock, OFTEntry.RWBuffer);
+
+            // uodate current position
+            OFTEntry.currentPosition = pos;
+
+            //  read new block to buffer
+            int newDiskBlock = fileDescriptor.blockNumbers[newFileBlock];
+            ByteBuffer temp = ByteBuffer.allocate(IOSystem.getBlockLengthInBytes());
+            ioSystem.read_block(newDiskBlock, temp);
+            OFTEntry.RWBuffer = temp.array();
+        } else {
+            OFTEntry.currentPosition = pos;
+        }
+
+        System.out.println("LSeek: set current position to " + pos);
         return STATUS_SUCCESS;
     }
 
@@ -280,8 +274,65 @@ public class FileSystem {
      * Lists the names of all files and their lengths.
      */
     void directory() {
+        for (Directory.DirEntry dirEntry : directory.entries) {
+            String fileName = dirEntry.file_name;
+            int fileLength = fileDescriptors[dirEntry.FDIndex].fileLengthInBytes;
+
+            System.out.println(fileName + " " + fileLength);
+        }
     }
 
+    //*******************************************************************************************************/
+
+    private int getFileDescriptorIndex(String fileName) {
+        for (Directory.DirEntry dirEntry : directory.entries) {
+            if (dirEntry.file_name.equals(fileName)) return dirEntry.FDIndex;
+        }
+        return -1;
+    }
+
+    private int getDirectoryEntryIndex(int FDIndex) {
+        for (int i = 0; i < NUMBER_OF_FILE_DESCRIPTORS - 1; i++) {
+            if (directory.entries.get(i) != null && directory.entries.get(i).FDIndex == FDIndex) return i;
+        }
+        return -1;
+    }
+
+    private int getOFTEntryIndex(int FDIndex) {
+        for (int i = 1; i < OFT.entries.length; i++) {
+            if (OFT.entries[i] != null && OFT.entries[i].FDIndex == FDIndex) return i;
+        }
+        return -1;
+    }
+
+    private int getFreeDescriptorIndex() {
+        for (int i = 0; i < NUMBER_OF_FILE_DESCRIPTORS; i++) {
+            if (fileDescriptors[i] == null) return i;
+        }
+        return -1;
+    }
+
+    private int getFreeOFTEntryIndex() {
+        for (int i = 1; i < 4; i++) {
+            if (OFT.entries[i] == null) return i;
+        }
+        return -1;
+    }
+
+    int getFreeBlockNumber() {
+        for (int i = 5; i < 64; i++) {
+            if (!bitmap.get(i)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void writeDataToDisk() {
+        // bitmap to disk
+        // -1 for empty FD and so on..
+        // Directory bytes - to disk blocks
+    }
 
 //public void initDiskFromFile() {
 //

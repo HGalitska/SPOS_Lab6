@@ -142,4 +142,58 @@ public class FileSystemTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void testInitialBitmap() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            for (int i = 0; i < 64; i++) {
+                System.out.println(fileSystem.bitmap.get(i));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void lseekEmptyFile() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            fileSystem.create("f1");
+            int OFTIndex = fileSystem.open("f1");
+            fileSystem.lseek(OFTIndex, 5);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void listDirectory() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            fileSystem.create("f1");
+            fileSystem.create("f2");
+            fileSystem.create("f3");
+            fileSystem.create("f4");
+
+            fileSystem.directory();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
