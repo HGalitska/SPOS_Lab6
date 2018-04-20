@@ -23,7 +23,7 @@ public class FileSystem {
         OFT = new OpenFileTable();
 
         bitmap = new BitSet(64);
-        bitmap.set(0, 5, true); // set 1 bit for bitmap + 4 for file descriptors
+        bitmap.set(0, 8, true); // set 1 bit for bitmap + 4 for file descriptors + 3 for dir
 
         this.ioSystem = ioSystem;
         fileDescriptors = new FileDescriptor[NUMBER_OF_FILE_DESCRIPTORS];
@@ -35,7 +35,7 @@ public class FileSystem {
     }
 
     private void initEmptyDisk() {
-        bitmap.set(5, 64, false); // all data blocks are empty
+        bitmap.set(8, 64, false); // all data blocks are empty
 
         int fdsPerBlock = 16 * NUMBER_OF_FILE_DESCRIPTORS / IOSystem.getBlockLengthInBytes();
         // init directory and add it to OFT
@@ -182,8 +182,7 @@ public class FileSystem {
         int currentFileBlock = OFTEntry.currentPosition / IOSystem.getBlockLengthInBytes();
         int currentDiskBlock = fileDescriptor.blockNumbers[currentFileBlock];
 
-        if (currentDiskBlock != -1)
-            ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
+        ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
 
         OFT.entries[OFTEntryIndex] = null;
 
@@ -254,7 +253,7 @@ public class FileSystem {
             // write current block to buffer
             ioSystem.write_block(currentDiskBlock, OFTEntry.RWBuffer);
 
-            // uodate current position
+            // update current position
             OFTEntry.currentPosition = pos;
 
             //  read new block to buffer
@@ -320,7 +319,7 @@ public class FileSystem {
     }
 
     int getFreeBlockNumber() {
-        for (int i = 5; i < 64; i++) {
+        for (int i = 8; i < 64; i++) {
             if (!bitmap.get(i)) {
                 return i;
             }
