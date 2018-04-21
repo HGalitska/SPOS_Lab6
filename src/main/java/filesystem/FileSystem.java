@@ -196,21 +196,52 @@ public class FileSystem {
      * @param count         number of bytes to be read.
      * @return int    number of bytes read.
      */
-    int read(int OFTEntryIndex, int memArea, int count) {
+    int read(int OFTEntryIndex, ByteBuffer memArea, int count) throws Exception {
         if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
 
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
 
         // find current position inside RWBffer
         int currentPosition = OFTEntry.currentPosition;
-        int currentFileBlock = currentPosition/IOSystem.getBlockLengthInBytes();
+        int currentFileBlock = currentPosition / IOSystem.getBlockLengthInBytes();
         int currentBufferPosition = currentPosition - currentFileBlock * IOSystem.getBlockLengthInBytes();
 
-        // read count bytes starting at RWBuffer[currentBufferPosition] to memory at memArea
-            // if end of block -> read next block to RWBuffer
-            // if end of file -> return number of bytes read
+        FileDescriptor fileDescriptor = fileDescriptors[OFTEntry.FDIndex];
+        int readCount = 0;
 
-        return count;
+        // read count bytes starting at RWBuffer[currentBufferPosition] to memArea
+        for (int i = 0; i < count; i++) {
+            // if end of file -> return number of bytes read
+            if (currentPosition >= fileDescriptor.fileLengthInBytes) {
+                if (currentPosition == 0) {
+                    System.out.println("Read: File is empty.");
+                    break;
+                }
+                System.out.println("Read: file has ended before " + count + " bytes could be read.");
+                break;
+            }
+
+            // if end of block -> read next block to RWBuffer
+            if (currentBufferPosition > IOSystem.getBlockLengthInBytes()) {
+                currentFileBlock = currentPosition / IOSystem.getBlockLengthInBytes();
+
+                ByteBuffer temp = ByteBuffer.allocate(IOSystem.getBlockLengthInBytes());
+                ioSystem.read_block(currentFileBlock, temp);
+                OFT.entries[OFTEntryIndex].RWBuffer = temp.array();
+
+                currentBufferPosition = 0;
+            }
+
+            // read 1 byte to memory
+            memArea.put(OFTEntry.RWBuffer[currentBufferPosition]);
+            // update positions, readCount
+            readCount++;
+            currentBufferPosition++;
+            currentPosition++; // = OFTEntry.currentPosition + readCount
+        }
+
+        OFTEntry.currentPosition = currentPosition; // points to first byte after last accessed
+        return readCount;
     }
 
     /**
@@ -222,7 +253,7 @@ public class FileSystem {
      * @param count         number of bytes to be written.
      * @return int    status.
      */
-    int write(int OFTEntryIndex, int memArea, int count) {
+    int write(int OFTEntryIndex, byte[] memArea, int count) {
         if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
 
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];

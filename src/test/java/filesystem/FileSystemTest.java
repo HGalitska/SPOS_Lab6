@@ -5,6 +5,8 @@ import iosystem.IOSystem;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+
 
 public class FileSystemTest {
     @Test
@@ -194,6 +196,24 @@ public class FileSystemTest {
 
             fileSystem.directory();
             
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void readEmptyFile() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            ByteBuffer memArea = ByteBuffer.allocate(100);
+            fileSystem.create("f1");
+            int read = fileSystem.read(fileSystem.open("f1"), memArea, 5);
+            System.out.println("Read: " + read + " bytes.");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
