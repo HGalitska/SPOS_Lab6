@@ -177,13 +177,19 @@ public class FileSystem {
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
         FileDescriptor fileDescriptor = fileDescriptors[OFTEntry.FDIndex];
         int currentFileBlock = OFTEntry.currentPosition / IOSystem.getBlockLengthInBytes();
+        if (OFTEntry.currentPosition == 192) {
+            currentFileBlock--;
+        }
         int currentDiskBlock = fileDescriptor.blockNumbers[currentFileBlock];
 
-        ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
+        if (currentDiskBlock != -1)
+            ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
+            bitmap.set(currentDiskBlock, true);
 
         OFT.entries[OFTEntryIndex] = null;
 
         System.out.println("Close: file is closed.");
+        System.out.println(bitmap);
         return STATUS_SUCCESS;
     }
 
@@ -198,6 +204,9 @@ public class FileSystem {
      */
     int read(int OFTEntryIndex, ByteBuffer memArea, int count) throws Exception {
         if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
+        if (count == 0 || count >= memArea.array().length) {
+            return 0;
+        }
 
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
 
@@ -205,6 +214,7 @@ public class FileSystem {
         int currentPosition = OFTEntry.currentPosition;
         int currentFileBlock = currentPosition / IOSystem.getBlockLengthInBytes();
         int currentBufferPosition = currentPosition - currentFileBlock * IOSystem.getBlockLengthInBytes();
+        int currentMemoryPosition = 0;
 
         FileDescriptor fileDescriptor = fileDescriptors[OFTEntry.FDIndex];
         int readCount = 0;
@@ -222,7 +232,7 @@ public class FileSystem {
             }
 
             // if end of block -> read next block to RWBuffer
-            if (currentBufferPosition > IOSystem.getBlockLengthInBytes()) {
+            if (currentBufferPosition == IOSystem.getBlockLengthInBytes()) {
                 currentFileBlock = currentPosition / IOSystem.getBlockLengthInBytes();
 
                 ByteBuffer temp = ByteBuffer.allocate(IOSystem.getBlockLengthInBytes());
@@ -233,14 +243,16 @@ public class FileSystem {
             }
 
             // read 1 byte to memory
-            memArea.put(OFTEntry.RWBuffer[currentBufferPosition]);
+            memArea.put(currentMemoryPosition, OFTEntry.RWBuffer[currentBufferPosition]);
             // update positions, readCount
             readCount++;
             currentBufferPosition++;
+            currentMemoryPosition++;
             currentPosition++; // = OFTEntry.currentPosition + readCount
         }
 
         OFTEntry.currentPosition = currentPosition; // points to first byte after last accessed
+        System.out.println("Read: " + readCount + " bytes, current position: " + OFTEntry.currentPosition);
         return readCount;
     }
 
@@ -251,14 +263,78 @@ public class FileSystem {
      * @param OFTEntryIndex index of file in OFT.
      * @param memArea       starting main memory address.
      * @param count         number of bytes to be written.
-     * @return int    status.
+     * @return int    number of bytes written to file.
      */
-    int write(int OFTEntryIndex, byte[] memArea, int count) {
+    int write(int OFTEntryIndex, byte[] memArea, int count) throws Exception {
         if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
+        if (count == 0 || count >= memArea.length) {
+            return 0;
+        }
 
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
 
-        return STATUS_SUCCESS;
+        // find current position inside RWBffer
+        int currentPosition = OFTEntry.currentPosition;
+        if (currentPosition == 192) {
+            System.out.println("Write: File is full");
+            return 0;
+        }
+        int currentFileBlock = currentPosition / IOSystem.getBlockLengthInBytes();
+        int currentBufferPosition = currentPosition - currentFileBlock * IOSystem.getBlockLengthInBytes();
+        int currentMemoryPosition = 0;
+
+        FileDescriptor fileDescriptor = fileDescriptors[OFTEntry.FDIndex];
+        int writtenCount = 0;
+
+        if (fileDescriptor.fileLengthInBytes == 0){
+            int newBlock = getFreeDataBlockNumber();
+            fileDescriptor.blockNumbers[currentFileBlock] = newBlock;
+            bitmap.set(newBlock, true);
+        }
+
+        // write count bytes from memArea to RWBuffer starting at currentBufferPosition
+        for (int i = 0; i < count; i++) {
+
+            //if end of file -> allocate new block if possible
+            if (currentPosition >= currentFileBlock * IOSystem.getBlockLengthInBytes() && fileDescriptor.blockNumbers[currentFileBlock] == -1) {
+                if (currentFileBlock < 3) {
+                    int newBlock = getFreeDataBlockNumber();
+                    fileDescriptor.blockNumbers[currentFileBlock] = newBlock;
+                } else {
+                    System.out.println("Write: no more blocks can be allocated.");
+                    break;
+                }
+            }
+
+            // write 1 byte to file
+            OFTEntry.RWBuffer[currentBufferPosition] = memArea[currentMemoryPosition];
+            fileDescriptor.fileLengthInBytes++;
+
+            // update positions, writtenCount
+            writtenCount++;
+            currentBufferPosition++;
+            currentMemoryPosition++;
+            currentPosition++;
+
+            // if end of block -> write buffer to disk, set bufferPosition to 0
+            if (currentBufferPosition == IOSystem.getBlockLengthInBytes()) {
+
+                int currentDiskBlock = fileDescriptor.blockNumbers[currentFileBlock];
+
+                ioSystem.write_block(currentDiskBlock, OFTEntry.RWBuffer);
+                System.out.println("Written: " + writtenCount + " bytes, current position: " + currentPosition);
+
+                bitmap.set(currentDiskBlock, true);
+                System.out.println(bitmap);
+
+                currentFileBlock++;
+                currentBufferPosition = 0;
+            }
+        }
+
+        OFTEntry.currentPosition = currentPosition; // points to first byte after last accessed
+        System.out.println(fileDescriptor.blockNumbers[0] + " " + fileDescriptor.blockNumbers[1] + " " + fileDescriptor.blockNumbers[2]);
+        return writtenCount;
     }
 
     /**
@@ -360,7 +436,7 @@ public class FileSystem {
         return -1;
     }
 
-    int getFreeBlockNumber() {
+    int getFreeDataBlockNumber() {
         for (int i = 8; i < 64; i++) {
             if (!bitmap.get(i)) {
                 return i;

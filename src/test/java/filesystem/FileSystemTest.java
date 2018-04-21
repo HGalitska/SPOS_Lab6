@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 
 public class FileSystemTest {
@@ -154,10 +155,7 @@ public class FileSystemTest {
             IOSystem ioSystem = new IOSystem(lDisk);
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
-
-            for (int i = 0; i < 64; i++) {
-                System.out.println(fileSystem.bitmap.get(i));
-            }
+            System.out.println(fileSystem.bitmap);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -211,8 +209,40 @@ public class FileSystemTest {
 
             ByteBuffer memArea = ByteBuffer.allocate(100);
             fileSystem.create("f1");
-            int read = fileSystem.read(fileSystem.open("f1"), memArea, 5);
-            System.out.println("Read: " + read + " bytes.");
+            fileSystem.read(fileSystem.open("f1"), memArea, 5);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void writeFile() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            byte[] memArea = new byte[125];
+            for (byte i = 0; i < memArea.length; i++) {
+                memArea[i] = (byte) 'c';
+            }
+
+            fileSystem.create("f1");
+            int oftindex = fileSystem.open("f1");
+            fileSystem.write(oftindex, memArea, 100);
+            System.out.println("------------------------------");
+            fileSystem.write(oftindex, memArea, 5);
+            System.out.println("------------------------------");
+
+            fileSystem.lseek(oftindex, 23);
+            ByteBuffer readBuffer = ByteBuffer.allocate(10);
+            fileSystem.read(oftindex, readBuffer, 10);
+            System.out.println("------------------------------");
+            fileSystem.close(oftindex);
+            System.out.println("------------------------------");
+
 
         } catch (Exception e) {
             e.printStackTrace();
