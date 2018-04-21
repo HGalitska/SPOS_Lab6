@@ -128,6 +128,7 @@ public class FileSystemTest {
 
     @Test
     public void destroyFile() {
+        Exception exception = null;
         try {
             LDisk lDisk = new LDisk();
             IOSystem ioSystem = new IOSystem(lDisk);
@@ -139,8 +140,9 @@ public class FileSystemTest {
             fileSystem.destroy("f1");
 
         } catch (Exception e) {
-            e.printStackTrace();
+           exception = e;
         }
+        Assert.assertNotNull(exception); // writing to block # -1
     }
 
     @Test

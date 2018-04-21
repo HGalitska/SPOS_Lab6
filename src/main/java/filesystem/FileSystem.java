@@ -167,14 +167,11 @@ public class FileSystem {
     int close(int OFTEntryIndex) throws Exception {
 
         if (OFTEntryIndex == 0) {
-            System.out.println("Close: directory can't be closed.");
+            System.out.println("Directory can't be closed.");
             return STATUS_ERROR;
         }
 
-        if (OFTEntryIndex >= OFT.entries.length || OFT.entries[OFTEntryIndex] == null) {
-            System.out.println("Close: file is not opened.");
-            return STATUS_ERROR;
-        }
+        if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
 
         // write buffer to disk
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
@@ -197,10 +194,23 @@ public class FileSystem {
      * @param OFTEntryIndex index of file in OFT.
      * @param memArea       starting main memory address.
      * @param count         number of bytes to be read.
-     * @return int    status.
+     * @return int    number of bytes read.
      */
     int read(int OFTEntryIndex, int memArea, int count) {
-        return STATUS_SUCCESS;
+        if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
+
+        OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
+
+        // find current position inside RWBffer
+        int currentPosition = OFTEntry.currentPosition;
+        int currentFileBlock = currentPosition/IOSystem.getBlockLengthInBytes();
+        int currentBufferPosition = currentPosition - currentFileBlock * IOSystem.getBlockLengthInBytes();
+
+        // read count bytes starting at RWBuffer[currentBufferPosition] to memory at memArea
+            // if end of block -> read next block to RWBuffer
+            // if end of file -> return number of bytes read
+
+        return count;
     }
 
     /**
@@ -213,6 +223,10 @@ public class FileSystem {
      * @return int    status.
      */
     int write(int OFTEntryIndex, int memArea, int count) {
+        if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
+
+        OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
+
         return STATUS_SUCCESS;
     }
 
@@ -231,10 +245,7 @@ public class FileSystem {
      * @return int    status.
      */
     int lseek(int OFTEntryIndex, int pos) throws Exception {
-        if (OFTEntryIndex >= OFT.entries.length || OFT.entries[OFTEntryIndex] == null) {
-            System.out.println("Lseek: file is not opened.");
-            return STATUS_ERROR;
-        }
+        if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
 
         FileDescriptor fileDescriptor = fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex];
 
@@ -333,6 +344,19 @@ public class FileSystem {
         // Directory bytes - to disk blocks
     }
 
+    int checkOFTIndex(int OFTEntryIndex) {
+        // ++++++ if open returns STATUS_ERROR => file doesn't exist or it could not be opened
+        if (OFTEntryIndex == STATUS_ERROR) {
+            System.out.println("File is not opened or does not exist.");
+            return STATUS_ERROR;
+        }
+
+        if (OFTEntryIndex >= OFT.entries.length || OFT.entries[OFTEntryIndex] == null) {
+            System.out.println("File is not opened.");
+            return STATUS_ERROR;
+        }
+        return STATUS_SUCCESS;
+    }
 //public void initDiskFromFile() {
 //
 //}
