@@ -14,7 +14,7 @@ public class FileSystem {
 
     private IOSystem ioSystem;
 
-    private OpenFileTable OFT;
+    public OpenFileTable OFT;   // made package-public for testing purposes
     BitSet bitmap; // made package-public for testing purposes
     private Directory directory;
     private FileDescriptor[] fileDescriptors;
@@ -191,7 +191,7 @@ public class FileSystem {
 
             // проверка не нужна, ибо мы не можем находиться в не выделеном нам блоке, и при этом битмап там и так должен стоять в 1
 //            if (currentDiskBlock != -1)
-                ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
+            ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
 //            bitmap.set(currentDiskBlock, true);
         }
 
@@ -272,7 +272,7 @@ public class FileSystem {
     }
 
     boolean isPointedToByteAfterLastByte(int FDIndex) {
-        return OFT.entries[getOFTEntryIndex(FDIndex)].currentPosition == fileDescriptors[FDIndex].fileLengthInBytes;
+        return ((fileDescriptors[FDIndex].fileLengthInBytes != 0) && (OFT.entries[getOFTEntryIndex(FDIndex)].currentPosition == fileDescriptors[FDIndex].fileLengthInBytes));
     }
 
     /**
@@ -300,14 +300,25 @@ public class FileSystem {
             System.out.println("Write: File is full (current position is at the end of the file.");
             return 0;
         }
+
         int currentFileBlock = OFTEntry.currentPosition / IOSystem.getBlockLengthInBytes();
         int currentBufferPosition = OFTEntry.currentPosition % IOSystem.getBlockLengthInBytes();
+
+//        if (isPointedToByteAfterLastByte(OFTEntry.FDIndex)) {
+//            currentFileBlock -= 1;
+////            currentBufferPosition = OFTEntry.currentPosition % IOSystem.getBlockLengthInBytes();
+//        }
         int currentMemoryPosition = 0;
 
         FileDescriptor fileDescriptor = fileDescriptors[OFTEntry.FDIndex];
         int writtenCount = 0;
 
         if (fileDescriptor.fileLengthInBytes == 0 || isPointedToByteAfterLastByte(OFTEntry.FDIndex)) {
+            if (isPointedToByteAfterLastByte(OFTEntry.FDIndex)) {
+                ioSystem.write_block(fileDescriptor.blockNumbers[currentFileBlock - 1], OFTEntry.RWBuffer);
+                OFTEntry.RWBuffer = new byte[IOSystem.getBlockLengthInBytes()];
+            }
+
             int newBlock = getFreeDataBlockNumber();
             fileDescriptor.blockNumbers[currentFileBlock] = newBlock;
             fileDescriptor.fileLengthInBytes += IOSystem.getBlockLengthInBytes();           // important

@@ -381,26 +381,39 @@ public class FileSystemTest {
                 memArea[i] = (byte) i;
             }
 
+            System.out.println("buffer to write from: " + Arrays.toString(memArea));
+
+
             fileSystem.create("f1");
             int oftindex = fileSystem.open("f1");
+
+
             fileSystem.write(oftindex, memArea, 64);
-            System.out.println("------------------------------");
+
+            System.out.println("------------------------------ try to read from 0 to 200, but file has only 64");
 
             fileSystem.lseek(oftindex, 0);
             ByteBuffer readBuffer = ByteBuffer.allocate(200);
             fileSystem.read(oftindex, readBuffer, 200);
-            System.out.println(Arrays.toString(readBuffer.array()));
+            System.out.println("readBuffer when read from 0 to 200: " + Arrays.toString(readBuffer.array()));
             System.out.println("------------------------------");
 
+            System.out.println("------------------------------ current position should be on 64: cur pos = " + fileSystem.OFT.entries[oftindex].currentPosition );
+
+            System.out.println("------------------------------ try to write on 64 byte, when pos at 64 and size = 64");
+            System.out.println("buffer to write from: " + Arrays.toString(memArea));
+
             fileSystem.write(oftindex, memArea, 64);
+
+            System.out.println("------------------------------ try to read from byte after last file byte: ");
             readBuffer = ByteBuffer.allocate(200);
             System.out.println(fileSystem.read(oftindex, readBuffer, 200));
             System.out.println(Arrays.toString(readBuffer.array()));
 
-
+            System.out.println("------------------------------ change pos to 0 and try to read all again: ");
             fileSystem.lseek(oftindex, 0);
             readBuffer = ByteBuffer.allocate(200);
-            System.out.println(fileSystem.read(oftindex, readBuffer, 200));
+            System.out.println(fileSystem.read(oftindex, readBuffer, 129));
             System.out.println(Arrays.toString(readBuffer.array()));
 
             fileSystem.close(oftindex);
@@ -444,6 +457,38 @@ public class FileSystemTest {
 
 
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void write2BlocksOneAfterOne() {
+        try {
+            LDisk lDisk = new LDisk();
+            IOSystem ioSystem = new IOSystem(lDisk);
+
+            FileSystem fileSystem = new FileSystem(ioSystem, true);
+
+            byte[] memArea = new byte[125];
+            for (int i = 0; i < memArea.length; i++) {
+                memArea[i] = (byte) i;
+            }
+
+            fileSystem.create("f1");
+            int oftindex = fileSystem.open("f1");
+            fileSystem.write(oftindex, memArea, 64);
+            fileSystem.write(oftindex, memArea, 64);
+
+            fileSystem.lseek(oftindex, 0);
+
+            ByteBuffer readBuffer = ByteBuffer.allocate(130);
+            fileSystem.read(oftindex, readBuffer, 130);
+
+            System.out.println(Arrays.toString(readBuffer.array()));
+
+
+            System.out.println("------------------------------");
         } catch (Exception e) {
             e.printStackTrace();
         }
