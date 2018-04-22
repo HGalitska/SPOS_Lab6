@@ -30,7 +30,7 @@ public class Shell {
                 "                                    ==========          ===========            ===             ==           ===               ===       ==========\n\n\n");
         System.out.print("========================================================================================================================================================\n\n");
         while (true) {
-            System.out.print("~ ");
+            System.out.print("\n~ ");
             input = scanner.nextLine().split(" ");
             command.delete(0, command.length());
             command.append(input[0]);
@@ -83,6 +83,22 @@ public class Shell {
                     }
                     break;
                 }
+                case "de": {
+                    if (input.length != 2) {
+                        System.out.println("error");
+                    } else {
+                        destroy(input[1]);
+                    }
+                    break;
+                }
+                case "dr": {
+                    if (input.length != 1) {
+                        System.out.println("error");
+                    } else {
+                        directory();
+                    }
+                    break;
+                }
 
                 default: {
                     System.out.println("Invalid input. Shell works with such operations: cr <file_name>, op <file_name>.");
@@ -97,7 +113,7 @@ public class Shell {
             System.out.println("error");
             return;
         }
-        System.out.println(fileName + " created.");
+        System.out.println(fileName + " created");
     }
 
     private void open(String fileName) {
@@ -144,5 +160,17 @@ public class Shell {
 
     private void close(int index) {
         if (fileSystem.close(index) == FileSystem.STATUS_ERROR) System.out.println("error");;
+    }
+
+    private void destroy(String fileName) {
+        if (fileSystem.destroy(fileName) == FileSystem.STATUS_ERROR) {
+            System.out.println("error");
+            return;
+        }
+        System.out.println("file " + fileName + " destroyed");
+    }
+
+    private void directory() {
+        fileSystem.directory();
     }
 }

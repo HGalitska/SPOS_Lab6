@@ -98,7 +98,7 @@ public class FileSystem {
      * @param symbolicFileName name of the file to be destroyed.
      * @return int              status.
      */
-    int destroy(String symbolicFileName) throws Exception {
+    public int destroy(String symbolicFileName) {
         int FDIndex = getFileDescriptorIndex(symbolicFileName);
         if (FDIndex == -1) {
             System.out.println("Destroy: File does NOT exist.");
@@ -115,7 +115,12 @@ public class FileSystem {
         int[] fileBlocks = fileDescriptors[FDIndex].blockNumbers;
         for (int block : fileBlocks) {
             if (block != -1) {
-                ioSystem.write_block(block, new byte[64]);
+                try {
+                    ioSystem.write_block(block, new byte[64]);
+                } catch (Exception e) {
+                    // never gets here
+                    e.printStackTrace();
+                }
                 bitmap.set(block, false); // clear bits for now empty blocks
             }
         }
@@ -497,7 +502,7 @@ public class FileSystem {
     /**
      * Lists the names of all files and their lengths.
      */
-    void directory() {
+    public void directory() {
         for (Directory.DirEntry dirEntry : directory.entries) {
             String fileName = dirEntry.file_name;
             int fileLength = fileDescriptors[dirEntry.FDIndex].fileLengthInBytes;
