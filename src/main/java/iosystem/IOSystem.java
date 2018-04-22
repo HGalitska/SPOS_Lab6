@@ -22,16 +22,17 @@ public class IOSystem {
     private final int numOfBlocksInOneCylinder;
     private final int numOfBlocksInOneTrack;
     private final int numOfBlocksInOneSector;
+    private final static boolean DEBUG_ON = false;
 
     public IOSystem(LDisk ldisk) {
         this.ldisk = ldisk;
-        System.out.println("Total number of bytes = " + LDisk.numOfBytes);
+        if (DEBUG_ON) System.out.println("Total number of bytes = " + LDisk.numOfBytes);
         numberOfBlocks = LDisk.numOfBytes / blockLengthInBytes;
-        System.out.println("Block length in bytes = " + blockLengthInBytes + "\nNumber of blocks = " + numberOfBlocks);
+        if (DEBUG_ON) System.out.println("Block length in bytes = " + blockLengthInBytes + "\nNumber of blocks = " + numberOfBlocks);
         numOfBlocksInOneCylinder = (Cylinder.numOfBytes / blockLengthInBytes);
         numOfBlocksInOneTrack = numOfBlocksInOneCylinder / Cylinder.numOfTracks;
         numOfBlocksInOneSector = numOfBlocksInOneTrack / Track.numOfSectors;
-        System.out.println("numOfBlocksInOneCylinder = " + numOfBlocksInOneCylinder + "\nnumOfBlocksInOneTrack = " + numOfBlocksInOneTrack + "\nnumOfBlocksInOneSector = " + numOfBlocksInOneSector);
+        if (DEBUG_ON) System.out.println("numOfBlocksInOneCylinder = " + numOfBlocksInOneCylinder + "\nnumOfBlocksInOneTrack = " + numOfBlocksInOneTrack + "\nnumOfBlocksInOneSector = " + numOfBlocksInOneSector);
     }
 
     public static int getBlockLengthInBytes() {
@@ -80,7 +81,7 @@ public class IOSystem {
 
         int[] result = new int[3];
 
-        System.out.println("try to get block #" + blockNumber + "\ncylinder number = " + cylinderNumber + "\ntrackNumber = " + trackNumber + "\nsector number = " + sectorNumber);
+        if (DEBUG_ON) System.out.println("try to get block #" + blockNumber + "\ncylinder number = " + cylinderNumber + "\ntrackNumber = " + trackNumber + "\nsector number = " + sectorNumber);
 
         result[0] = cylinderNumber;
         result[1] = trackNumber;
@@ -105,16 +106,15 @@ public class IOSystem {
         if (buffer.array().length != blockLengthInBytes)
             throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes");
 
-        System.out.println("\nread block(" + blockNumber + ")");
+        if (DEBUG_ON) System.out.println("\nread block(" + blockNumber + ")");
 
         int[] blockLocation = getBlockLocationOnDisk(blockNumber);
 
-        System.out.println("block location: " + Arrays.toString(blockLocation));
+        if (DEBUG_ON) System.out.println("block location: " + Arrays.toString(blockLocation));
 
         for (int k = 0; k < blockLengthInBytes; k++) {
             buffer.put(k, ldisk.cylinders[blockLocation[0]].tracks[blockLocation[1]].sectors[blockLocation[2]].bytes[k]);
         }
-
         return blockLocation;
     }
 
@@ -134,10 +134,10 @@ public class IOSystem {
         if (buffer.length != blockLengthInBytes)
             throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes");
 
-        System.out.println("\nwrite block(" + blockNumber + ")");
+        if (DEBUG_ON) System.out.println("\nwrite block(" + blockNumber + ")");
 
         int[] blockLocation = getBlockLocationOnDisk(blockNumber);
-        System.out.println("block location: " + Arrays.toString(blockLocation));
+        if (DEBUG_ON) System.out.println("block location: " + Arrays.toString(blockLocation));
 
         for (int k = 0; k < blockLengthInBytes; k++) {
             ldisk.cylinders[blockLocation[0]].tracks[blockLocation[1]].sectors[blockLocation[2]].bytes[k] = buffer[k];
