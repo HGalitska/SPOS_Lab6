@@ -19,22 +19,22 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("f1");
-            fileSystem.create("f2");
-            fileSystem.create("f3");
-            fileSystem.create("f4");
-            fileSystem.create("f5");
-            fileSystem.create("f6");
-            fileSystem.create("f7");
-            fileSystem.create("f8");
-            fileSystem.create("f9");
-            fileSystem.create("fa");
-            fileSystem.create("fb");
-            fileSystem.create("fc");
-            fileSystem.create("fd");
-            fileSystem.create("fe");
-            fileSystem.create("ff");
-            fileSystem.create("fg");
+            fileSystem.create("fil1");
+            fileSystem.create("fil2");
+            fileSystem.create("fil3");
+            fileSystem.create("fil4");
+            fileSystem.create("fil5");
+            fileSystem.create("fil6");
+            fileSystem.create("fil7");
+            fileSystem.create("fil8");
+            fileSystem.create("fil9");
+            fileSystem.create("fila");
+            fileSystem.create("filb");
+            fileSystem.create("filc");
+            fileSystem.create("fild");
+            fileSystem.create("file");
+            fileSystem.create("filf");
+            fileSystem.create("filg");
 
 
         } catch (Exception e) {
@@ -51,13 +51,13 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("f1");
-            fileSystem.create("f2");
-            fileSystem.create("f3");
-            fileSystem.create("f1");
-            fileSystem.create("f4");
-            fileSystem.create("f2");
-            fileSystem.create("f3");
+            fileSystem.create("fil1");
+            fileSystem.create("fil2");
+            fileSystem.create("fil3");
+            fileSystem.create("fil1");
+            fileSystem.create("fil4");
+            fileSystem.create("fil2");
+            fileSystem.create("fil3");
 
 
         } catch (Exception e) {
@@ -74,10 +74,10 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("f1");
-            fileSystem.create("f2");
+            fileSystem.create("fil1");
+            fileSystem.create("fil2");
             fileSystem.create("file4");
-            fileSystem.create("f5");
+            fileSystem.create("fil5");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -125,7 +125,7 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("f1");
+            fileSystem.create("fil1");
             fileSystem.close(2);
 
         } catch (Exception e) {
@@ -143,9 +143,9 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("f1");
-            fileSystem.open("f1");
-            fileSystem.destroy("f1");
+            fileSystem.create("fil1");
+            fileSystem.open("fil1");
+            fileSystem.destroy("fil1");
 
         } catch (Exception e) {
 //           exception = e;
@@ -178,8 +178,8 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("f1");
-            int OFTIndex = fileSystem.open("f1");
+            fileSystem.create("fil1");
+            int OFTIndex = fileSystem.open("fil1");
             fileSystem.lseek(OFTIndex, 5);
 
         } catch (Exception e) {
@@ -196,10 +196,10 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("f1");
-            fileSystem.create("f2");
-            fileSystem.create("f3");
-            fileSystem.create("f4");
+            fileSystem.create("fil1");
+            fileSystem.create("fil2");
+            fileSystem.create("fil3");
+            fileSystem.create("fil4");
 
             fileSystem.directory();
             
@@ -217,15 +217,15 @@ public class FileSystemTest {
 
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
-            fileSystem.create("f1");
-            fileSystem.create("f2");
-            fileSystem.create("f3");
-            fileSystem.create("f4");
+            fileSystem.create("fil1");
+            fileSystem.create("fil2");
+            fileSystem.create("fil3");
+            fileSystem.create("fil4");
 
             byte[] bytes = new byte[67];
             for (int i = 0; i < 67; i++) bytes[i] = (byte) i;
 
-            int oftIndex = fileSystem.open("f2");
+            int oftIndex = fileSystem.open("fil2");
 
             fileSystem.write(oftIndex, bytes , 67);
 
@@ -254,8 +254,8 @@ public class FileSystemTest {
             FileSystem fileSystem = new FileSystem(ioSystem, true);
 
             ByteBuffer memArea = ByteBuffer.allocate(100);
-            fileSystem.create("f1");
-            int result = fileSystem.read(fileSystem.open("f1"), memArea, 5);
+            fileSystem.create("fil1");
+            int result = fileSystem.read(fileSystem.open("fil1"), memArea, 5);
             System.out.println("return of read() = " + result);
             Assert.assertEquals(-3, result);
 
@@ -278,7 +278,7 @@ public class FileSystemTest {
                 memArea[i] = (byte) i;
             }
 
-            fileSystem.create("f1");
+            fileSystem.create("fil1");
             int oftindex = fileSystem.open("f1");
             fileSystem.write(oftindex, memArea, 100);
             System.out.println("------------------------------");
@@ -313,8 +313,8 @@ public class FileSystemTest {
                 memArea[i] = (byte) i;
             }
 
-            fileSystem.create("f1");
-            int oftindex = fileSystem.open("f1");
+            fileSystem.create("fil1");
+            int oftindex = fileSystem.open("fil1");
             fileSystem.write(oftindex, memArea, 130);
             System.out.println("------------------------------");
             fileSystem.write(oftindex, memArea, 5);
@@ -348,8 +348,8 @@ public class FileSystemTest {
                 memArea[i] = (byte) i;
             }
 
-            fileSystem.create("f1");
-            int oftindex = fileSystem.open("f1");
+            fileSystem.create("fil1");
+            int oftindex = fileSystem.open("fil1");
             fileSystem.write(oftindex, memArea, 250);
             System.out.println("------------------------------");
 
@@ -384,8 +384,8 @@ public class FileSystemTest {
             System.out.println("buffer to write from: " + Arrays.toString(memArea));
 
 
-            fileSystem.create("f1");
-            int oftindex = fileSystem.open("f1");
+            fileSystem.create("fil1");
+            int oftindex = fileSystem.open("fil1");
 
 
             fileSystem.write(oftindex, memArea, 64);
@@ -425,9 +425,9 @@ public class FileSystemTest {
 
 
 
-            fileSystem.destroy("f1");
-            fileSystem.create("f1");
-            oftindex = fileSystem.open("f1");
+            fileSystem.destroy("fil1");
+            fileSystem.create("fil1");
+            oftindex = fileSystem.open("fil1");
             fileSystem.write(oftindex, memArea, 64);
             System.out.println("------------------------------");
             fileSystem.write(oftindex, memArea, 60);
@@ -442,9 +442,9 @@ public class FileSystemTest {
             System.out.println("================================");
 
 
-            fileSystem.destroy("f1");
-            fileSystem.create("f1");
-            oftindex = fileSystem.open("f1");
+            fileSystem.destroy("fil1");
+            fileSystem.create("fil1");
+            oftindex = fileSystem.open("fil1");
             fileSystem.write(oftindex, memArea, 64);
             System.out.println("------------------------------");
             fileSystem.write(oftindex, memArea, 69);
@@ -475,8 +475,8 @@ public class FileSystemTest {
                 memArea[i] = (byte) i;
             }
 
-            fileSystem.create("f1");
-            int oftindex = fileSystem.open("f1");
+            fileSystem.create("fil1");
+            int oftindex = fileSystem.open("fil1");
             fileSystem.write(oftindex, memArea, 64);
             fileSystem.write(oftindex, memArea, 64);
 
@@ -508,8 +508,8 @@ public class FileSystemTest {
                 memArea[i] = (byte) i;
             }
 
-            fileSystem.create("f1");
-            int oftindex = fileSystem.open("f1");
+            fileSystem.create("fil1");
+            int oftindex = fileSystem.open("fil1");
             fileSystem.write(oftindex, memArea, 125);
             System.out.println("------------------------------");
 
@@ -543,8 +543,8 @@ public class FileSystemTest {
                 memArea[i] = (byte) i;
             }
 
-            fileSystem.create("f1");
-            int oftindex = fileSystem.open("f1");
+            fileSystem.create("fil1");
+            int oftindex = fileSystem.open("fil1");
             fileSystem.write(oftindex, memArea, memArea.length);
             System.out.println("------------------------------");
 
@@ -584,8 +584,8 @@ public class FileSystemTest {
                 memArea[i] = (byte) i;
             }
 
-            fileSystem.create("f1");
-            int oftindex = fileSystem.open("f1");
+            fileSystem.create("fil1");
+            int oftindex = fileSystem.open("fil1");
             fileSystem.write(oftindex, memArea, 193);
             System.out.println("------------------------------");
 

@@ -1,14 +1,22 @@
+package shell;
+
 import disk.LDisk;
 import filesystem.FileSystem;
 import iosystem.IOSystem;
-import shell.Shell;
+import org.junit.Test;
 
-public class MainClass {
-    public static void main(String[] args) {
+import static org.junit.Assert.*;
+
+public class ShellTest {
+
+    @Test
+    public void create() {
         LDisk ldisk = new LDisk();
         IOSystem ioSystem = new IOSystem(ldisk);
         FileSystem fileSystem = new FileSystem(ioSystem, true);
+
         Shell shell = new Shell(fileSystem);
-        shell.start();
+
+        // simulate system.in from file
     }
 }
