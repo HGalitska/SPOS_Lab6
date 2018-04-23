@@ -749,14 +749,16 @@ public class FileSystem {
             for (int j = 0; j < numberOfFileDescriptorsInOneBlock; j++) {
                 int currentDescriptor = i * numberOfFileDescriptorsInOneBlock + j;
                 if (fileDescriptors[currentDescriptor] == null) {
-                    for (int k = 0; k < 4; k++) {
-                        block.putInt(-1);
-                    }
+                    block.putInt(-1);
+                    block.putInt(-1);
+                    block.putInt(-1);
+                    block.putInt(-1);
                 } else {
                     block.putInt(fileDescriptors[currentDescriptor].fileLengthInBytes);
-                    for (int k = 0; k < 3; k++) {
-                        block.putInt(fileDescriptors[currentDescriptor].blockNumbers[i]);
-                    }
+
+                    block.putInt(fileDescriptors[currentDescriptor].blockNumbers[0]);
+                    block.putInt(fileDescriptors[currentDescriptor].blockNumbers[1]);
+                    block.putInt(fileDescriptors[currentDescriptor].blockNumbers[2]);
                 }
             }
             ioSystem.write_block(i + 1, block.array());
