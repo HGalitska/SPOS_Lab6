@@ -209,15 +209,12 @@ public class FileSystem {
             }
             int currentDiskBlock = fileDescriptor.blockNumbers[currentFileBlock];
 
-            // проверка не нужна, ибо мы не можем находиться в не выделеном нам блоке, и при этом битмап там и так должен стоять в 1
-//            if (currentDiskBlock != -1)
             try {
                 ioSystem.write_block(currentDiskBlock, OFT.entries[OFTEntryIndex].RWBuffer);
             } catch (Exception e) {
                 // never gets here
                 e.printStackTrace();
             }
-//            bitmap.set(currentDiskBlock, true);
         }
 
         System.out.println("Close: File \'" + directory.entries.get(getDirectoryEntryIndex(OFT.entries[OFTEntryIndex].FDIndex)).file_name + "\' is closed.");
@@ -243,14 +240,10 @@ public class FileSystem {
             return 0;
         }
 
-        // if count >= memArea.length - read till you can to fill memArea and return size of memArea
-
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
 
         // find current position inside RWBffer
-
         int currentBufferPosition = OFTEntry.currentPosition % IOSystem.getBlockLengthInBytes();
-//        currentPosition - currentFileBlock * IOSystem.getBlockLengthInBytes();
         int currentMemoryPosition = 0;
 
         FileDescriptor fileDescriptor = fileDescriptors[OFTEntry.FDIndex];
@@ -275,7 +268,6 @@ public class FileSystem {
                     try {
                         ioSystem.write_block(fileDescriptor.blockNumbers[currentFileBlock - 1], OFTEntry.RWBuffer);
 
-
                         ByteBuffer temp = ByteBuffer.allocate(IOSystem.getBlockLengthInBytes());
                         ioSystem.read_block(fileDescriptor.blockNumbers[currentFileBlock], temp);
 
@@ -295,17 +287,13 @@ public class FileSystem {
                 readCount++;
                 currentBufferPosition++;
                 currentMemoryPosition++;
-                OFTEntry.currentPosition++; // = OFTEntry.currentPosition + readCount
+                OFTEntry.currentPosition++;
             }
         }
 
         // OFTEntry.currentPosition - points to first byte after last accessed
         System.out.println("Read: " + readCount + " bytes, current position: " + OFTEntry.currentPosition);
         return readCount;
-    }
-
-    boolean isPointedToByteAfterLastByte(int FDIndex) {
-        return ((fileDescriptors[FDIndex].fileLengthInBytes != 0) && (OFT.entries[getOFTEntryIndex(FDIndex)].currentPosition == fileDescriptors[FDIndex].fileLengthInBytes));
     }
 
     /**
@@ -319,12 +307,9 @@ public class FileSystem {
      */
     public int write(int OFTEntryIndex, byte[] memArea, int count) {
         if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR || count < 0) return STATUS_ERROR;
-
         if (count == 0) {
             return 0;
         }
-
-        //  if count >= memArea.length write till end of memArea
 
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
 
@@ -337,10 +322,6 @@ public class FileSystem {
         int currentFileBlock = OFTEntry.currentPosition / IOSystem.getBlockLengthInBytes();
         int currentBufferPosition = OFTEntry.currentPosition % IOSystem.getBlockLengthInBytes();
 
-//        if (isPointedToByteAfterLastByte(OFTEntry.FDIndex)) {
-//            currentFileBlock -= 1;
-////            currentBufferPosition = OFTEntry.currentPosition % IOSystem.getBlockLengthInBytes();
-//        }
         int currentMemoryPosition = 0;
 
         FileDescriptor fileDescriptor = fileDescriptors[OFTEntry.FDIndex];
@@ -381,11 +362,6 @@ public class FileSystem {
                         // never gets here
                         e.printStackTrace();
                     }
-
-//                bitmap.set(currentDiskBlock, true);       // и так должно быть true, ибо блок у нас был выделен под текущий буффер.
-                    // а от под следующий, нужно выделять, если нет
-//                System.out.println(bitmap);
-
 
                     currentBufferPosition = 0;
 
@@ -575,6 +551,10 @@ public class FileSystem {
             return STATUS_ERROR;
         }
         return STATUS_SUCCESS;
+    }
+
+    boolean isPointedToByteAfterLastByte(int FDIndex) {
+        return ((fileDescriptors[FDIndex].fileLengthInBytes != 0) && (OFT.entries[getOFTEntryIndex(FDIndex)].currentPosition == fileDescriptors[FDIndex].fileLengthInBytes));
     }
 
 

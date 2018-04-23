@@ -1,12 +1,10 @@
 package shell;
 
 import filesystem.FileSystem;
-import iosystem.IOSystem;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Scanner;
-import java.util.regex.Pattern;
 
 public class Shell {
     FileSystem fileSystem;
@@ -23,14 +21,14 @@ public class Shell {
         String[] input;
         System.out.print("\n\n\n========================================================================================================================================================\n\n\n");
         System.out.print(
-                "=====                    =====      ==========          ==                     ===             ==               ===       ===           ==========\n" +
-                "  =====               =====         ==                  ==                 ===              ==    ==           ===  == ==  ===          ==\n" +
-                "    =====   ===    =====            =======             ==                ==               ==      ==         ===     ==    ===         ==========\n" +
-                "       ======  ======               ==                  ==                 ===              ==    ==         ===             ===        ==\n" +
-                "                                    ==========          ===========            ===             ==           ===               ===       ==========\n\n\n");
+                        "=====                    =====      ==========          ==                     ===             ==               ===       ===           ==========\n" +
+                        "  =====               =====         ==                  ==                 ===              ==    ==           ===  == ==  ===          ==\n" +
+                        "    =====   ===    =====            =======             ==                ==               ==      ==         ===     ==    ===         ==========\n" +
+                        "       ======  ======               ==                  ==                 ===              ==    ==         ===             ===        ==\n" +
+                        "                                    ==========          ===========            ===             ==           ===               ===       ==========\n\n\n");
         System.out.print("========================================================================================================================================================\n\n");
         while (true) {
-            System.out.print("\n~ ");
+            System.out.print("\nsuperman$ ");
             input = scanner.nextLine().split(" ");
             command.delete(0, command.length());
             command.append(input[0]);
@@ -159,7 +157,8 @@ public class Shell {
     }
 
     private void close(int index) {
-        if (fileSystem.close(index) == FileSystem.STATUS_ERROR) System.out.println("error");;
+        if (fileSystem.close(index) == FileSystem.STATUS_ERROR) System.out.println("error");
+        ;
     }
 
     private void destroy(String fileName) {
