@@ -26,7 +26,7 @@ public class Shell {
         String[] input;
         System.out.print("\n\n\n========================================================================================================================================================\n\n\n");
         System.out.print(
-                        "=====                    =====      ==========          ==                     ===             ==               ===       ===           ==========\n" +
+                "=====                    =====      ==========          ==                     ===             ==               ===       ===           ==========\n" +
                         "  =====               =====         ==                  ==                 ===              ==    ==           ===  == ==  ===          ==\n" +
                         "    =====   ===    =====            =======             ==                ==               ==      ==         ===     ==    ===         ==========\n" +
                         "       ======  ======               ==                  ==                 ===              ==    ==         ===             ===        ==\n" +
@@ -58,7 +58,11 @@ public class Shell {
                     if (input[2].length() != 1 || input.length != 4 || !fsInitialized) { // пишем, что неправильно используем.
                         System.out.println("error");
                     } else {
-                        write(Integer.parseInt(input[1]), input[2].charAt(0), Integer.parseInt(input[3]));
+                        try {
+                            write(Integer.parseInt(input[1]), input[2].charAt(0), Integer.parseInt(input[3]));
+                        } catch (NumberFormatException e) {
+                            System.out.println("error");
+                        }
                     }
                     break;
                 }
@@ -66,7 +70,11 @@ public class Shell {
                     if (input.length != 3 || !fsInitialized) {
                         System.out.println("error");
                     } else {
-                        seek(Integer.parseInt(input[1]), Integer.parseInt(input[2]));
+                        try {
+                            seek(Integer.parseInt(input[1]), Integer.parseInt(input[2]));
+                        } catch (NumberFormatException e) {
+                            System.out.println("error");
+                        }
                     }
                     break;
                 }
@@ -74,7 +82,11 @@ public class Shell {
                     if (input.length != 3 || !fsInitialized) {
                         System.out.println("error");
                     } else {
-                        read(Integer.parseInt(input[1]), Integer.parseInt(input[2]));
+                        try {
+                            read(Integer.parseInt(input[1]), Integer.parseInt(input[2]));
+                        } catch (NumberFormatException e) {
+                            System.out.println("error");
+                        }
                     }
                     break;
                 }
@@ -82,7 +94,11 @@ public class Shell {
                     if (input.length != 2 || !fsInitialized) {
                         System.out.println("error");
                     } else {
-                        close(Integer.parseInt(input[1]));
+                        try {
+                            close(Integer.parseInt(input[1]));
+                        } catch (NumberFormatException e) {
+                            System.out.println("error");
+                        }
                     }
                     break;
                 }

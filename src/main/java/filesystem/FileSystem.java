@@ -4,6 +4,7 @@ import disk.LDisk;
 import iosystem.IOSystem;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.BitSet;
 
@@ -72,17 +73,14 @@ public class FileSystem {
      */
     public int create(final String symbolicFileName) {
         if (symbolicFileName.length() != Directory.FILE_NAME_LENGTH) {
-            System.out.println("Create: File name length != " + Directory.FILE_NAME_LENGTH + ". Choose another name for file");
             return STATUS_ERROR;
         } else if (directory.entries.size() == FileSystem.NUMBER_OF_FILE_DESCRIPTORS - 1) {
-            System.out.println("Create: Number of files has reached the limit.");
             return STATUS_ERROR;
         }
 
         int FDIndex = getFreeDescriptorIndex();
         if (FDIndex == -1) {
             // never gets here
-            System.out.println("\nCreate: No more space for files.\n");
             return STATUS_ERROR;
         }
 
@@ -91,7 +89,6 @@ public class FileSystem {
             if (dirEntry.file_name.equals(symbolicFileName)) doFileExist = true;
         }
         if (doFileExist) {
-            System.out.println("\nCreate: File already exists.\n");
             return STATUS_ERROR;
         }
 
@@ -102,9 +99,6 @@ public class FileSystem {
             e.printStackTrace();
         }
         fileDescriptors[FDIndex] = new FileDescriptor();
-
-        System.out.println("\nAfter creating new object:");
-        directory.entries.forEach((o) -> System.out.println("FDIndex: " + o.FDIndex + "; File name: " + o.file_name));
 
         return STATUS_SUCCESS;
     }
@@ -118,7 +112,6 @@ public class FileSystem {
     public int destroy(String symbolicFileName) {
         int FDIndex = getFileDescriptorIndex(symbolicFileName);
         if (FDIndex == -1) {
-            System.out.println("Destroy: File does NOT exist.");
             return STATUS_ERROR;
         }
 
@@ -149,7 +142,6 @@ public class FileSystem {
         // clear file descriptor
         fileDescriptors[FDIndex] = null;
 
-        System.out.println("Destroy: File " + symbolicFileName + " is destroyed.");
         return STATUS_SUCCESS;
     }
 
@@ -163,18 +155,15 @@ public class FileSystem {
 
         int FDIndex = getFileDescriptorIndex(symbolicFileName);
         if (FDIndex == -1) {
-            System.out.println("Open: File does NOT exist.");
             return STATUS_ERROR;
         }
 
         if (getOFTEntryIndex(FDIndex) != -1) {
-            System.out.println("Open: File is already opened.");
             return getOFTEntryIndex(FDIndex);
         }
 
         int OFTEntryIndex = getFreeOFTEntryIndex();
         if (OFTEntryIndex == -1) {
-            System.out.println("Open: Number of open files has reached the limit");
             return STATUS_ERROR;
         }
 
@@ -209,7 +198,6 @@ public class FileSystem {
     public int close(int OFTEntryIndex) {
 
         if (OFTEntryIndex == 0) {
-            System.out.println("Close: Directory can't be closed.");
             return STATUS_ERROR;
         }
 
@@ -234,10 +222,7 @@ public class FileSystem {
             }
         }
 
-        System.out.println("Close: File \'" + directory.entries.get(getDirectoryEntryIndex(OFT.entries[OFTEntryIndex].FDIndex)).file_name + "\' is closed.");
-
         OFT.entries[OFTEntryIndex] = null;
-        System.out.println(bitmap);
         return STATUS_SUCCESS;
     }
 
@@ -271,10 +256,8 @@ public class FileSystem {
             // if end of file -> return number of bytes read
             if (OFTEntry.currentPosition == fileDescriptor.fileLengthInBytes) {
                 if (OFTEntry.currentPosition == 0) {
-                    System.out.println("Read: File is empty.");
                     break;
                 }
-                System.out.println("Read: File has ended before " + count + " bytes could be read.");
                 break;
             } else {
 
@@ -309,7 +292,6 @@ public class FileSystem {
         }
 
         // OFTEntry.currentPosition - points to first byte after last accessed
-        System.out.println("Read: " + readCount + " bytes, current position: " + OFTEntry.currentPosition);
         return readCount;
     }
 
@@ -332,7 +314,6 @@ public class FileSystem {
 
         // find current position inside RWBffer
         if (OFTEntry.currentPosition == END_OF_FILE) {
-            System.out.println("Write: File is full (current position is at the end of the file.");
             return 0;
         }
 
@@ -407,7 +388,6 @@ public class FileSystem {
                         OFTEntry.RWBuffer = temp.array();
                     }
                 } else {
-                    System.out.println("Write: No more blocks can be allocated or wrote.");
                     break;
                 }
             }
@@ -422,9 +402,7 @@ public class FileSystem {
             OFTEntry.currentPosition++;
         }
 
-        System.out.println("Written: " + writtenCount + " bytes, current position: " + OFTEntry.currentPosition);
         // OFTEntry.currentPosition - points to first byte after last accessed
-        System.out.println(fileDescriptor.blockNumbers[0] + " " + fileDescriptor.blockNumbers[1] + " " + fileDescriptor.blockNumbers[2]);
         return writtenCount;
     }
 
@@ -443,13 +421,11 @@ public class FileSystem {
      * @return int    status.
      */
     public int lseek(int OFTEntryIndex, int pos) {
-        System.out.println("in lseek");
         if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR) return STATUS_ERROR;
 
         FileDescriptor fileDescriptor = fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex];
 
         if (pos >= fileDescriptor.fileLengthInBytes || pos < 0) {
-            System.out.println("LSeek: New position is out of file.");
             return STATUS_ERROR;
         }
 
@@ -488,7 +464,6 @@ public class FileSystem {
             OFTEntry.currentPosition = pos;
         }
 
-        System.out.println("LSeek: Current position is " + pos);
         return STATUS_SUCCESS;
     }
 
@@ -559,12 +534,10 @@ public class FileSystem {
     int checkOFTIndex(int OFTEntryIndex) {
         // ++++++ if open returns STATUS_ERROR => file doesn't exist or it could not be opened
         if (OFTEntryIndex == STATUS_ERROR) {
-            System.out.println("File is not opened or does not exist.");
             return STATUS_ERROR;
         }
 
         if (OFTEntryIndex <= 0 || OFTEntryIndex >= OFT.entries.length || OFT.entries[OFTEntryIndex] == null) {
-            System.out.println("File is not opened.");
             return STATUS_ERROR;
         }
         return STATUS_SUCCESS;
@@ -616,13 +589,13 @@ public class FileSystem {
         ByteBuffer block = ByteBuffer.allocate(IOSystem.getBlockLengthInBytes());
         ioSystem.read_block(0, block);
         String string;
-//        = new StringBuilder();
-        for (int i = 0; i < 16; i++) {
-//            stringBuilder.delete(0, stringBuilder.length());
+
+        for (int i = 0; i < 2; i++) {
             string = Integer.toBinaryString(block.getInt());
+            System.out.println(string);
 
             for (int j = 0; j < string.length(); j++) {
-                if (string.charAt(j) == '1') bitmap.set(j, true);
+                if (string.charAt(j) == '1') bitmap.set(i * 32 + j, true);
             }
         }
 
@@ -724,14 +697,24 @@ public class FileSystem {
         }
     }
 
+
+    private static byte[] binaryStringToBytes(String data) {
+        byte[] output = new BigInteger(data, 2).toByteArray();
+        return output;
+    }
+
     private static byte[] bitsetToByteArray(BitSet bits) {
-        byte[] bytes = new byte[64];
+        StringBuilder stringBuilder = new StringBuilder();
+
         for (int i = 0; i < bits.size(); i++) {
             if (bits.get(i)) {
-                bytes[i] |= 1 << (i % 8);
+                stringBuilder.append('0');
+            } else {
+                stringBuilder.append('1');
             }
         }
-        return bytes;
+
+        return binaryStringToBytes(stringBuilder.toString());
     }
 
     private void writeBitmapToDisk() throws Exception {
