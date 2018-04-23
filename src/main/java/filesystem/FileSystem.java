@@ -617,7 +617,9 @@ public class FileSystem {
             for (int j = 0; j < numberOfFileDescriptorsInOneBlock; j++) {
                 fileLengthInBytes = block.getInt();
                 if (fileLengthInBytes == -1) {
-                    // continue;
+                    block.getInt();
+                    block.getInt();
+                    block.getInt();
                 } else {
                     blockNumbers = new int[FileDescriptor.MAX_NUMBER_OF_BLOCKS];
                     blockNumbers[0] = block.getInt();
@@ -647,6 +649,7 @@ public class FileSystem {
                     reading = false;
                     break;
                 } else {
+                    System.out.println("read next dir entry.");
                     fileName.delete(0, fileName.length());
                     fileName.append((char) b);
                     fileName.append((char) block.get());
@@ -696,51 +699,6 @@ public class FileSystem {
             e.printStackTrace();
         }
     }
-
-    private static String byteToBinaryString(byte[] data) {
-        String output = new String();
-        for (int ll = 0; ll < data.length; ll++) {
-            output += (String.format("%8s", Integer.toBinaryString(data[ll] & 0xFF)).replace(' ', '0'));
-        }
-        return output;
-    }
-
-//    private static byte[] binaryStringToBytes(String data) {
-////        byte[] output = new BigInteger(data, 2).toByteArray();
-//
-//        byte[] output = null;
-////                = new byte[64];
-////        ByteBuffer byteBuffer = ByteBuffer.allocate(64);
-////        byteBuffer.
-//        StringBuilder stringBuilder = new StringBuilder();
-////
-////        for (int i = 0; i < data.length(); i += 8) {
-////            if ()
-////            stringBuilder.delete(0, stringBuilder.length());
-////            stringBuilder.append(data.charAt(i));
-////        }
-//
-//        int current2Bytes = 0;
-//
-//        for (int i = 0; i < 32; i++) {
-//            stringBuilder.delete(0, stringBuilder.length());
-//            stringBuilder.append()
-//            short a = Short.parseShort(b, 2);
-//            ByteBuffer bytes = ByteBuffer.allocate(2).putShort(a);
-//
-//            byte[] array = bytes.array();
-//        }
-//
-//
-//
-//        String string = byteToBinaryString(output);
-//        System.out.println("binStr.length() = " + string.length());
-//        System.out.println("bytes to bin: " + string);
-//
-//
-//        return output;
-//    }
-
 
     private static byte[] binaryStringToBytes(String data) {
         byte[] temp = new BigInteger(data, 2).toByteArray();
