@@ -16,7 +16,7 @@ public class IOSystem {
      * <p>
      * (B) - blockLengthInBytes  - is the block length, i.e., the number of bytes per block.
      */
-    private LDisk ldisk;
+    public LDisk ldisk;
     private final int numberOfBlocks;
     private static final int blockLengthInBytes = 64;
     private final int numOfBlocksInOneCylinder;
@@ -28,11 +28,13 @@ public class IOSystem {
         this.ldisk = ldisk;
         if (DEBUG_ON) System.out.println("Total number of bytes = " + LDisk.numOfBytes);
         numberOfBlocks = LDisk.numOfBytes / blockLengthInBytes;
-        if (DEBUG_ON) System.out.println("Block length in bytes = " + blockLengthInBytes + "\nNumber of blocks = " + numberOfBlocks);
+        if (DEBUG_ON)
+            System.out.println("Block length in bytes = " + blockLengthInBytes + "\nNumber of blocks = " + numberOfBlocks);
         numOfBlocksInOneCylinder = (Cylinder.numOfBytes / blockLengthInBytes);
         numOfBlocksInOneTrack = numOfBlocksInOneCylinder / Cylinder.numOfTracks;
         numOfBlocksInOneSector = numOfBlocksInOneTrack / Track.numOfSectors;
-        if (DEBUG_ON) System.out.println("numOfBlocksInOneCylinder = " + numOfBlocksInOneCylinder + "\nnumOfBlocksInOneTrack = " + numOfBlocksInOneTrack + "\nnumOfBlocksInOneSector = " + numOfBlocksInOneSector);
+        if (DEBUG_ON)
+            System.out.println("numOfBlocksInOneCylinder = " + numOfBlocksInOneCylinder + "\nnumOfBlocksInOneTrack = " + numOfBlocksInOneTrack + "\nnumOfBlocksInOneSector = " + numOfBlocksInOneSector);
     }
 
     public static int getBlockLengthInBytes() {
@@ -81,7 +83,8 @@ public class IOSystem {
 
         int[] result = new int[3];
 
-        if (DEBUG_ON) System.out.println("try to get block #" + blockNumber + "\ncylinder number = " + cylinderNumber + "\ntrackNumber = " + trackNumber + "\nsector number = " + sectorNumber);
+        if (DEBUG_ON)
+            System.out.println("try to get block #" + blockNumber + "\ncylinder number = " + cylinderNumber + "\ntrackNumber = " + trackNumber + "\nsector number = " + sectorNumber);
 
         result[0] = cylinderNumber;
         result[1] = trackNumber;
@@ -104,7 +107,7 @@ public class IOSystem {
         if (0 > blockNumber || blockNumber >= numberOfBlocks)
             throw new IllegalArgumentException("(blockNumber) should be: (0 <= blockNumber || blockNumber < numberOfBlocks); blockNumber = " + blockNumber + "; numberOfBlocks = " + numberOfBlocks);
         if (buffer.array().length != blockLengthInBytes)
-            throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes");
+            throw new IllegalArgumentException("buffer.length != blockLengthInBytes");
 
         if (DEBUG_ON) System.out.println("\nread block(" + blockNumber + ")");
 

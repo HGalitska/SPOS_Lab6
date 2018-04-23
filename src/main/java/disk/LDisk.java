@@ -1,6 +1,6 @@
 package disk;
 
-public class LDisk {
+public class LDisk implements java.io.Serializable {
     public Cylinder[] cylinders;
     public static final int numOfCylinders = 4;
     public static final int numOfBytes = numOfCylinders * Cylinder.numOfBytes;
