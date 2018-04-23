@@ -1,6 +1,6 @@
 package disk;
 
-public class Cylinder {
+public class Cylinder implements java.io.Serializable {
     public Track[] tracks;
     public static final int numOfTracks = 2;
     public static final int numOfBytes = numOfTracks * Track.numOfBytes;

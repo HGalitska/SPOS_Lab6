@@ -1,6 +1,6 @@
 package disk;
 
-public class Track {
+public class Track implements java.io.Serializable {
     public Sector[] sectors;
     public static final int numOfSectors = 8;
     public static final int numOfBytes = numOfSectors * Sector.numOfBytes;

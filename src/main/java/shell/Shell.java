@@ -1,6 +1,7 @@
 package shell;
 
 import filesystem.FileSystem;
+import iosystem.IOSystem;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -10,12 +11,14 @@ import java.util.Scanner;
 public class Shell {
     FileSystem fileSystem;
     Scanner scanner;
-    boolean fsInitialised = false;
+    boolean fsInitialized;
+    IOSystem ioSystem;
 
-    public Shell(FileSystem fileSystem) {
-        if (fileSystem == null) throw new IllegalArgumentException("FileSystem should NOT be null.");
-        this.fileSystem = fileSystem;
+    public Shell(IOSystem ioSystem) {
+        fileSystem = null;
+        this.ioSystem = ioSystem;
         scanner = new Scanner(System.in);
+        fsInitialized = false;
     }
 
     public void start() {
@@ -23,7 +26,7 @@ public class Shell {
         String[] input;
         System.out.print("\n\n\n========================================================================================================================================================\n\n\n");
         System.out.print(
-                "=====                    =====      ==========          ==                     ===             ==               ===       ===           ==========\n" +
+                        "=====                    =====      ==========          ==                     ===             ==               ===       ===           ==========\n" +
                         "  =====               =====         ==                  ==                 ===              ==    ==           ===  == ==  ===          ==\n" +
                         "    =====   ===    =====            =======             ==                ==               ==      ==         ===     ==    ===         ==========\n" +
                         "       ======  ======               ==                  ==                 ===              ==    ==         ===             ===        ==\n" +
@@ -36,7 +39,7 @@ public class Shell {
             command.append(input[0]);
             switch (command.toString()) {
                 case "cr": {
-                    if (input.length != 2 || !fsInitialised) {
+                    if (input.length != 2 || !fsInitialized) {
                         System.out.println("error");
                     } else {
                         create(input[1]);
@@ -44,7 +47,7 @@ public class Shell {
                     break;
                 }
                 case "op": {
-                    if (input.length != 2 || !fsInitialised) {
+                    if (input.length != 2 || !fsInitialized) {
                         System.out.println("error");
                     } else {
                         open(input[1]);
@@ -52,7 +55,7 @@ public class Shell {
                     break;
                 }
                 case "wr": {
-                    if (input[2].length() != 1 || input.length != 4 || !fsInitialised) { // пишем, что неправильно используем.
+                    if (input[2].length() != 1 || input.length != 4 || !fsInitialized) { // пишем, что неправильно используем.
                         System.out.println("error");
                     } else {
                         write(Integer.parseInt(input[1]), input[2].charAt(0), Integer.parseInt(input[3]));
@@ -60,7 +63,7 @@ public class Shell {
                     break;
                 }
                 case "sk": {
-                    if (input.length != 3 || !fsInitialised) {
+                    if (input.length != 3 || !fsInitialized) {
                         System.out.println("error");
                     } else {
                         seek(Integer.parseInt(input[1]), Integer.parseInt(input[2]));
@@ -68,7 +71,7 @@ public class Shell {
                     break;
                 }
                 case "rd": {
-                    if (input.length != 3 || !fsInitialised) {
+                    if (input.length != 3 || !fsInitialized) {
                         System.out.println("error");
                     } else {
                         read(Integer.parseInt(input[1]), Integer.parseInt(input[2]));
@@ -76,7 +79,7 @@ public class Shell {
                     break;
                 }
                 case "cl": {
-                    if (input.length != 2 || !fsInitialised) {
+                    if (input.length != 2 || !fsInitialized) {
                         System.out.println("error");
                     } else {
                         close(Integer.parseInt(input[1]));
@@ -84,7 +87,7 @@ public class Shell {
                     break;
                 }
                 case "de": {
-                    if (input.length != 2 || !fsInitialised) {
+                    if (input.length != 2 || !fsInitialized) {
                         System.out.println("error");
                     } else {
                         destroy(input[1]);
@@ -92,7 +95,7 @@ public class Shell {
                     break;
                 }
                 case "dr": {
-                    if (input.length != 1 || !fsInitialised) {
+                    if (input.length != 1 || !fsInitialized) {
                         System.out.println("error");
                     } else {
                         directory();
@@ -101,16 +104,20 @@ public class Shell {
                 }
 
                 case "in": {
-                    if (input.length != 2) {
+                    if (input.length > 2) {
                         System.out.println("error");
                     } else {
-                        init(input[1]);
+                        if (input.length == 2) {
+                            init(input[1]);
+                        } else {
+                            init();
+                        }
                     }
                     break;
                 }
 
                 case "sv": {
-                    if (input.length != 2 || !fsInitialised) {
+                    if (input.length != 2 || !fsInitialized) {
                         System.out.println("error");
                     } else {
                         save(input[1]);
@@ -130,6 +137,7 @@ public class Shell {
     /**
      * Create a new file with the name fileName.
      * Output: file <name> created.
+     *
      * @param fileName name of the file.
      */
     private void create(String fileName) {
@@ -212,24 +220,23 @@ public class Shell {
     private void init(String fileName) {
         File f = new File(fileName);
         if (f.exists()) {
-            fileSystem.initFileSystemFromFile(fileName);
+            fileSystem = new FileSystem(ioSystem, fileName);
             System.out.println("disk restored");
-        }
-        else {
-            fileSystem.initEmptyDisk(); // ???
+        } else {
+            fileSystem = new FileSystem(ioSystem);
             System.out.println("disk initialized");
         }
-        fsInitialised = true;
+        fsInitialized = true;
+    }
+
+    private void init() {
+        fileSystem = new FileSystem(ioSystem);
+        System.out.println("disk initialized");
+        fsInitialized = true;
     }
 
     private void save(String fileName) {
-        File f = new File(fileName);
-        if (f.exists()) {
-            fileSystem.saveFileSystemToFile(fileName);
-            System.out.println("disk saved");
-        }
-        else {
-            System.out.println("error");
-        }
+        fileSystem.saveFileSystemToFile(fileName);
+        System.out.println("disk saved");
     }
 }

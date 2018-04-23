@@ -1,6 +1,6 @@
 package disk;
 
-public class Sector {
+public class Sector implements java.io.Serializable {
     public static final short numOfBytes = 64;
     public byte[] bytes;
 
