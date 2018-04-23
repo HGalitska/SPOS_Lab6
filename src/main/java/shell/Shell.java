@@ -161,7 +161,7 @@ public class Shell {
             System.out.println("error");
             return;
         }
-        System.out.println("file " + fileName + " created");
+        System.out.println("file \'" + fileName + "\' created");
     }
 
     private void open(String fileName) {
@@ -170,7 +170,7 @@ public class Shell {
             System.out.println("error");
             return;
         }
-        System.out.println("file " + fileName + " opened, index = " + index);
+        System.out.println("file \'" + fileName + "\' opened, index = " + index);
     }
 
     private void write(int index, char c, int count) {
@@ -226,7 +226,7 @@ public class Shell {
             System.out.println("error");
             return;
         }
-        System.out.println("file " + fileName + " destroyed");
+        System.out.println("file \'" + fileName + "\' destroyed");
     }
 
     private void directory() {

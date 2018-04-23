@@ -697,9 +697,58 @@ public class FileSystem {
         }
     }
 
+    private static String byteToBinaryString(byte[] data) {
+        String output = new String();
+        for (int ll = 0; ll < data.length; ll++) {
+            output += (String.format("%8s", Integer.toBinaryString(data[ll] & 0xFF)).replace(' ', '0'));
+        }
+        return output;
+    }
+
+//    private static byte[] binaryStringToBytes(String data) {
+////        byte[] output = new BigInteger(data, 2).toByteArray();
+//
+//        byte[] output = null;
+////                = new byte[64];
+////        ByteBuffer byteBuffer = ByteBuffer.allocate(64);
+////        byteBuffer.
+//        StringBuilder stringBuilder = new StringBuilder();
+////
+////        for (int i = 0; i < data.length(); i += 8) {
+////            if ()
+////            stringBuilder.delete(0, stringBuilder.length());
+////            stringBuilder.append(data.charAt(i));
+////        }
+//
+//        int current2Bytes = 0;
+//
+//        for (int i = 0; i < 32; i++) {
+//            stringBuilder.delete(0, stringBuilder.length());
+//            stringBuilder.append()
+//            short a = Short.parseShort(b, 2);
+//            ByteBuffer bytes = ByteBuffer.allocate(2).putShort(a);
+//
+//            byte[] array = bytes.array();
+//        }
+//
+//
+//
+//        String string = byteToBinaryString(output);
+//        System.out.println("binStr.length() = " + string.length());
+//        System.out.println("bytes to bin: " + string);
+//
+//
+//        return output;
+//    }
+
 
     private static byte[] binaryStringToBytes(String data) {
-        byte[] output = new BigInteger(data, 2).toByteArray();
+        byte[] temp = new BigInteger(data, 2).toByteArray();
+        System.out.println("temp.length = " + temp.length);
+        byte[] output = new byte[64];
+        for (int i = 0; i < 64; i++) {
+            output[i] = temp[i + 1];
+        }
         return output;
     }
 
@@ -708,11 +757,22 @@ public class FileSystem {
 
         for (int i = 0; i < bits.size(); i++) {
             if (bits.get(i)) {
-                stringBuilder.append('0');
-            } else {
                 stringBuilder.append('1');
+            } else {
+                stringBuilder.append('0');
             }
         }
+
+        System.out.println("binString len = " + stringBuilder.length());
+
+        System.out.println("binString in bitsetToArray = " + stringBuilder.toString());
+
+
+        for (int i = 0; i < 448; i++) {
+            stringBuilder.append('0');
+        }
+
+        System.out.println("binString len = " + stringBuilder.length());
 
         return binaryStringToBytes(stringBuilder.toString());
     }

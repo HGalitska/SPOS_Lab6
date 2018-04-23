@@ -135,7 +135,7 @@ public class IOSystem {
         if (0 > blockNumber || blockNumber >= numberOfBlocks)
             throw new IllegalArgumentException("(blockNumber) should be: (0 <= blockNumber || blockNumber < numberOfBlocks); blockNumber = " + blockNumber + "; numberOfBlocks = " + numberOfBlocks);
         if (buffer.length != blockLengthInBytes)
-            throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes");
+            throw new IllegalArgumentException("Byte[] p.length != blockLengthInBytes; p.length = " + buffer.length);
 
         if (DEBUG_ON) System.out.println("\nwrite block(" + blockNumber + ")");
 
