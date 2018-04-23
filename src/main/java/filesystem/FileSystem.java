@@ -37,7 +37,7 @@ public class FileSystem {
 //        else initFileSystemFromDisk();
     }
 
-    private void initEmptyDisk() {
+    public void initEmptyDisk() {
 //        bitmap.set(8, 64, false); // all data blocks are empty
 
         int fdsPerBlock = 16 * NUMBER_OF_FILE_DESCRIPTORS / IOSystem.getBlockLengthInBytes();
@@ -559,6 +559,7 @@ public class FileSystem {
         return ((fileDescriptors[FDIndex].fileLengthInBytes != 0) && (OFT.entries[getOFTEntryIndex(FDIndex)].currentPosition == fileDescriptors[FDIndex].fileLengthInBytes));
     }
 
+    //*******************************************************************************************************/
 
     public void initFileSystemFromFile(String fileName) {
         initDiskFromFile(fileName);
@@ -583,7 +584,6 @@ public class FileSystem {
             e.printStackTrace();
         }
     }
-
 
     public void initFileSystemFromDisk() {
         try {
@@ -625,7 +625,7 @@ public class FileSystem {
 
         for (int i = 0; i < numberOfBlocksForFileDescriptors; i++) {
             block = ByteBuffer.allocate(IOSystem.getBlockLengthInBytes());
-            ioSystem.read_block(i, block);
+            ioSystem.read_block(i + 1, block);
             for (int j = 0; j < numberOfFileDescriptorsInOneBlock; j++) {
                 fileLengthInBytes = block.getInt();
                 if (fileLengthInBytes == -1) {
@@ -671,5 +671,89 @@ public class FileSystem {
                 }
             }
         }
+    }
+
+
+    public void saveFileSystemToFile(String fileName) {
+        saveFileSystemToDisk();
+        saveDiskToFile(fileName);
+    }
+
+    private void saveFileSystemToDisk() {
+        // close all open files except for directory
+        for (int i = 1; i < OFT.entries.length; i++) {
+            close(i);
+        }
+
+        try {
+            writeBitmapToDisk();
+            writeFileDescriptorsToDisk();
+            writeDirectoryToDisk();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveDiskToFile(String fileName) {
+        ObjectOutputStream objectOutputStream = null;
+        try {
+            objectOutputStream = new ObjectOutputStream(new FileOutputStream(fileName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            objectOutputStream.writeObject(ioSystem.ldisk);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeBitmapToDisk() throws Exception {
+        ioSystem.write_block(0, bitmap.toByteArray());
+    }
+
+    private void writeFileDescriptorsToDisk() throws Exception {
+        int numberOfFileDescriptorsInOneBlock = IOSystem.getBlockLengthInBytes() / 16;
+        int numberOfBlocksForFileDescriptors = NUMBER_OF_FILE_DESCRIPTORS * 16 / IOSystem.getBlockLengthInBytes();
+
+        ByteBuffer block;
+        fileDescriptors = new FileDescriptor[NUMBER_OF_FILE_DESCRIPTORS];
+
+        for (int i = 0; i < numberOfBlocksForFileDescriptors; i++) {
+            block = ByteBuffer.allocate(IOSystem.getBlockLengthInBytes());
+            for (int j = 0; j < numberOfFileDescriptorsInOneBlock; j++) {
+                int currentDescriptor = i * numberOfFileDescriptorsInOneBlock + j;
+                block.putInt(fileDescriptors[currentDescriptor].fileLengthInBytes);
+                if (fileDescriptors[currentDescriptor].fileLengthInBytes != 0) {
+                    block.putInt(fileDescriptors[currentDescriptor].blockNumbers[0]);
+                    block.putInt(fileDescriptors[currentDescriptor].blockNumbers[1]);
+                    block.putInt(fileDescriptors[currentDescriptor].blockNumbers[2]);
+                }
+            }
+            ioSystem.write_block(i + 1, block.array());
+        }
+
+
+    }
+
+    private void writeDirectoryToDisk() throws Exception {
+        ByteBuffer block = null;
+        int numberOfEntriesInOneBlock = IOSystem.getBlockLengthInBytes() / 8;
+
+        for (int i = 0; i < FileDescriptor.MAX_NUMBER_OF_BLOCKS; i++) {
+            block = ByteBuffer.allocate(IOSystem.getBlockLengthInBytes());
+            for (int j = 0; j < numberOfEntriesInOneBlock; j++) {
+                int currentEntry = i * FileDescriptor.MAX_NUMBER_OF_BLOCKS + j;
+
+                String fileName = directory.entries.get(currentEntry).file_name;
+                for (int k = 0; k < fileName.length(); k++) {
+                    block.put((byte) fileName.charAt(k));
+                }
+                block.putInt(directory.entries.get(currentEntry).FDIndex);
+            }
+            ioSystem.write_block(5 + i, block.array());
+        }
+        block.putInt(0);
     }
 }
