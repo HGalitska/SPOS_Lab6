@@ -159,6 +159,7 @@ public class FileSystem {
         }
 
         if (getOFTEntryIndex(FDIndex) != -1) {
+            System.out.println("File has been already opened.");
             return getOFTEntryIndex(FDIndex);
         }
 
@@ -236,10 +237,13 @@ public class FileSystem {
      * @return int    number of bytes read.
      */
     public int read(int OFTEntryIndex, ByteBuffer memArea, int count) {
-        if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR || count < 0 || fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex].fileLengthInBytes == 0 || isPointedToByteAfterLastByte(OFT.entries[OFTEntryIndex].FDIndex))
+        if (checkOFTIndex(OFTEntryIndex) == STATUS_ERROR || count < 0 || fileDescriptors[OFT.entries[OFTEntryIndex].FDIndex].fileLengthInBytes == 0)
             return STATUS_ERROR;
         if (count == 0) {
             return 0;
+        }
+        if (isPointedToByteAfterLastByte(OFT.entries[OFTEntryIndex].FDIndex)) {
+            return STATUS_ERROR;
         }
 
         OpenFileTable.OFTEntry OFTEntry = OFT.entries[OFTEntryIndex];
@@ -525,12 +529,6 @@ public class FileSystem {
         return -1;
     }
 
-    private void writeDataToDisk() {
-        // bitmap to disk
-        // -1 for empty FD and so on..
-        // Directory bytes - to disk blocks
-    }
-
     int checkOFTIndex(int OFTEntryIndex) {
         // ++++++ if open returns STATUS_ERROR => file doesn't exist or it could not be opened
         if (OFTEntryIndex == STATUS_ERROR) {
@@ -592,14 +590,12 @@ public class FileSystem {
 
         for (int i = 0; i < 2; i++) {
             string = Integer.toBinaryString(block.getInt());
-            System.out.println(string);
 
             for (int j = 0; j < string.length(); j++) {
                 if (string.charAt(j) == '1') bitmap.set(i * 32 + j, true);
             }
         }
 
-        System.out.println(bitmap);
     }
 
     private void initFileDescriptorsFromDisk() throws Exception {
@@ -649,7 +645,6 @@ public class FileSystem {
                     reading = false;
                     break;
                 } else {
-                    System.out.println("read next dir entry.");
                     fileName.delete(0, fileName.length());
                     fileName.append((char) b);
                     fileName.append((char) block.get());
@@ -663,6 +658,7 @@ public class FileSystem {
         }
     }
 
+    //*******************************************************************************************************/
 
     public void saveFileSystemToFile(String fileName) {
         saveFileSystemToDisk();
@@ -702,7 +698,6 @@ public class FileSystem {
 
     private static byte[] binaryStringToBytes(String data) {
         byte[] temp = new BigInteger(data, 2).toByteArray();
-        System.out.println("temp.length = " + temp.length);
         byte[] output = new byte[64];
         for (int i = 0; i < 64; i++) {
             output[i] = temp[i + 1];
@@ -721,16 +716,9 @@ public class FileSystem {
             }
         }
 
-        System.out.println("binString len = " + stringBuilder.length());
-
-        System.out.println("binString in bitsetToArray = " + stringBuilder.toString());
-
-
         for (int i = 0; i < 448; i++) {
             stringBuilder.append('0');
         }
-
-        System.out.println("binString len = " + stringBuilder.length());
 
         return binaryStringToBytes(stringBuilder.toString());
     }
