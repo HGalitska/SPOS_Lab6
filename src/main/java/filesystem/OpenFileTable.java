@@ -9,10 +9,16 @@ class OpenFileTable {
         int currentPosition;
         int FDIndex;
 
+        boolean bufferModified;
+        int fileBlockInBuffer;
+
         OFTEntry() {
             RWBuffer = new byte[IOSystem.getBlockLengthInBytes()];
             currentPosition = -1;
             FDIndex = -1;
+
+            bufferModified = false;
+            fileBlockInBuffer = -1;
         }
     }
 
