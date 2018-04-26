@@ -17,7 +17,7 @@ public class FileSystem {
 
     private IOSystem ioSystem;
 
-    private OpenFileTable OFT;
+    OpenFileTable OFT;
     private BitSet bitmap;
     private Directory directory;
     private FileDescriptor[] fileDescriptors;
@@ -481,8 +481,8 @@ public class FileSystem {
         }
 
         try {
-            ioSystem.ldisk = (LDisk) objectInputStream.readObject();
-        } catch (IOException | ClassNotFoundException e) {
+            ioSystem.setLdisk((LDisk) objectInputStream.readObject());
+        } catch (ClassNotFoundException | IOException  e) {
             e.printStackTrace();
         }
     }
@@ -647,7 +647,7 @@ public class FileSystem {
         }
 
         try {
-            objectOutputStream.writeObject(ioSystem.ldisk);
+            objectOutputStream.writeObject(ioSystem.getLdisk());
         } catch (IOException e) {
             e.printStackTrace();
         }
